@@ -1,5 +1,6 @@
 package com.oboe.backend.user.repository;
 
+import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
 import com.oboe.backend.user.entity.UserStatus;
@@ -40,8 +41,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByIsBannedTrue();
 
     // 활성 사용자 목록 조회
-    @Query("SELECT u FROM User u WHERE u.status = 'ACTIVE'")
-    List<User> findActiveUsers();
+    @Query("SELECT u FROM User u WHERE u.status = :status")
+    List<User> findActiveUsers(@Param("status") UserStatus status);
 
     // 이름으로 사용자 검색 (부분 일치)
     List<User> findByNameContaining(String name);
@@ -50,7 +51,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByEmailContaining(String email);
 
     // 소셜 프로바이더별 사용자 조회
-    List<User> findBySocialProvider(String socialProvider);
+    List<User> findBySocialProvider(SocialProvider socialProvider);
 
     // 특정 기간 이후 로그인한 사용자 조회
     @Query("SELECT u FROM User u WHERE u.lastLoginAt >= :since")

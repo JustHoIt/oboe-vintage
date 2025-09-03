@@ -25,6 +25,26 @@ spring:
     console:
       enabled: true
 
+  # 테스트용 Redis 설정 (Embedded Redis 사용)
+  data:
+    redis:
+      host: localhost
+      port: 6370
+      password: 
+      username: 
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# 테스트용 SMS 설정
+coolsms:
+  apikey: test_api_key_1234
+  apisecret: test_api_secret_1234
+  fromnumber: 01012345678
+
 # 로깅 설정
 logging:
   level:

@@ -1,6 +1,7 @@
 package com.oboe.backend.user.integration;
 
 import com.oboe.backend.config.JpaConfig;
+import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
 import com.oboe.backend.user.entity.UserStatus;
@@ -54,7 +55,7 @@ class UserIntegrationTest {
                 .address("서울시 강남구")
                 .birthDate(LocalDate.of(1990, 1, 1))
                 .gender("M")
-                .socialProvider("LOCAL")
+                .socialProvider(SocialProvider.LOCAL)
                 .lastLoginAt(LocalDateTime.now())
                 .isBanned(false)
                 .profileImg("profile.jpg")
@@ -324,7 +325,7 @@ class UserIntegrationTest {
                 .address("테스트주소")
                 .birthDate(LocalDate.of(1990, 1, 1))
                 .gender("M")
-                .socialProvider("LOCAL")
+                .socialProvider(SocialProvider.LOCAL)
                 .lastLoginAt(LocalDateTime.now())
                 .isBanned(false)
                 .profileImg("test.jpg")
