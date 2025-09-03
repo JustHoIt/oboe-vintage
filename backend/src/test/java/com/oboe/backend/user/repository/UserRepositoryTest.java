@@ -1,5 +1,6 @@
 package com.oboe.backend.user.repository;
 
+import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
 import com.oboe.backend.user.entity.UserStatus;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@DisplayName("유저 레포지토리 테스트")
 class UserRepositoryTest {
 
     @Autowired
@@ -46,7 +48,7 @@ class UserRepositoryTest {
                 .address("서울시 강남구")
                 .birthDate(LocalDate.of(1990, 1, 1))
                 .gender("M")
-                .socialProvider("LOCAL")
+                .socialProvider(SocialProvider.LOCAL)
                 .lastLoginAt(LocalDateTime.now().minusDays(1))
                 .isBanned(false)
                 .profileImg("profile1.jpg")
@@ -63,7 +65,7 @@ class UserRepositoryTest {
                 .address("부산시 해운대구")
                 .birthDate(LocalDate.of(1985, 5, 15))
                 .gender("F")
-                .socialProvider("GOOGLE")
+                .socialProvider(SocialProvider.LOCAL)
                 .lastLoginAt(LocalDateTime.now().minusHours(2))
                 .isBanned(false)
                 .profileImg("profile2.jpg")
@@ -80,8 +82,8 @@ class UserRepositoryTest {
                 .address("대구시 수성구")
                 .birthDate(LocalDate.of(1992, 8, 20))
                 .gender("F")
-                .socialProvider("KAKAO")
-                .lastLoginAt(LocalDateTime.now().minusDays(7))
+                .socialProvider(SocialProvider.KAKAO)
+                .lastLoginAt(LocalDateTime.now().minusDays(3))
                 .isBanned(true)
                 .profileImg("profile3.jpg")
                 .build();
@@ -207,7 +209,7 @@ class UserRepositoryTest {
     @DisplayName("활성 사용자 목록 조회 테스트 (JPQL)")
     void findActiveUsers() {
         // when
-        List<User> activeUsers = userRepository.findActiveUsers();
+        List<User> activeUsers = userRepository.findActiveUsers(UserStatus.ACTIVE);
 
         // then
         assertThat(activeUsers).hasSize(2);
@@ -241,16 +243,12 @@ class UserRepositoryTest {
     @DisplayName("소셜 프로바이더별 사용자 조회 테스트")
     void findBySocialProvider() {
         // when
-        List<User> localUsers = userRepository.findBySocialProvider("LOCAL");
-        List<User> googleUsers = userRepository.findBySocialProvider("GOOGLE");
-        List<User> kakaoUsers = userRepository.findBySocialProvider("KAKAO");
+        List<User> localUsers = userRepository.findBySocialProvider(SocialProvider.LOCAL);
+        List<User> kakaoUsers = userRepository.findBySocialProvider(SocialProvider.KAKAO);
 
         // then
-        assertThat(localUsers).hasSize(1);
-        assertThat(localUsers.get(0).getName()).isEqualTo("홍길동");
-        
-        assertThat(googleUsers).hasSize(1);
-        assertThat(googleUsers.get(0).getName()).isEqualTo("김철수");
+        assertThat(localUsers).hasSize(2);
+        assertThat(localUsers).extracting(User::getName).containsExactlyInAnyOrder("홍길동", "김철수");
         
         assertThat(kakaoUsers).hasSize(1);
         assertThat(kakaoUsers.get(0).getName()).isEqualTo("이영희");
@@ -282,6 +280,7 @@ class UserRepositoryTest {
                 .phoneNumber("010-9999-8888")
                 .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
+                .socialProvider(SocialProvider.LOCAL)
                 .lastLoginAt(LocalDateTime.now())
                 .build();
 

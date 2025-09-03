@@ -9,6 +9,8 @@ import static org.assertj.core.api.Assertions.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+
+@DisplayName("유저 엔티티 테스트")
 class UserTest {
 
   private User user;
@@ -26,7 +28,7 @@ class UserTest {
         .address("서울시 강남구")
         .birthDate(LocalDate.of(1990, 1, 1))
         .gender("M")
-        .socialProvider("LOCAL")
+        .socialProvider(SocialProvider.LOCAL)
         .lastLoginAt(LocalDateTime.now())
         .isBanned(false)
         .profileImg("profile.jpg")
@@ -58,29 +60,29 @@ class UserTest {
   }
 
   @Test
-  @DisplayName("User.of() 정적 팩토리 메서드 테스트")
-  void createUserWithOfMethod() {
+  @DisplayName("User.builder() 정적 팩토리 메서드 테스트")
+  void createUserWithBuilderMethod() {
     // given
     LocalDateTime now = LocalDateTime.now();
     LocalDate birthDate = LocalDate.of(1995, 5, 15);
 
     // when
-    User createdUser = User.of(
-        "factory@example.com",
-        "factorypassword",
-        "팩토리사용자",
-        "factory123",
-        "010-1111-2222",
-        UserRole.ADMIN,
-        UserStatus.ACTIVE,
-        "부산시 해운대구",
-        birthDate,
-        "F",
-        "GOOGLE",
-        now,
-        false,
-        "factory_profile.jpg"
-    );
+    User createdUser = User.builder()
+        .email("factory@example.com")
+        .password("factorypassword")
+        .name("팩토리사용자")
+        .nickname("factory123")
+        .phoneNumber("010-1111-2222")
+        .role(UserRole.ADMIN)
+        .status(UserStatus.ACTIVE)
+        .address("부산시 해운대구")
+        .birthDate(birthDate)
+        .gender("F")
+        .socialProvider(SocialProvider.KAKAO)
+        .lastLoginAt(now)
+        .isBanned(false)
+        .profileImg("factory_profile.jpg")
+        .build();
 
     // then
     assertThat(createdUser.getEmail()).isEqualTo("factory@example.com");
@@ -91,7 +93,7 @@ class UserTest {
     assertThat(createdUser.getAddress()).isEqualTo("부산시 해운대구");
     assertThat(createdUser.getBirthDate()).isEqualTo(birthDate);
     assertThat(createdUser.getGender()).isEqualTo("F");
-    assertThat(createdUser.getSocialProvider()).isEqualTo("GOOGLE");
+    assertThat(createdUser.getSocialProvider()).isEqualTo(SocialProvider.KAKAO);
     assertThat(createdUser.getLastLoginAt()).isEqualTo(now);
     assertThat(createdUser.isBanned()).isFalse();
     assertThat(createdUser.getProfileImg()).isEqualTo("factory_profile.jpg");
