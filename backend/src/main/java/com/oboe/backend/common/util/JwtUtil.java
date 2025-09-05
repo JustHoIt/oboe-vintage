@@ -167,7 +167,8 @@ public class JwtUtil {
   /**
    * 토큰에서 특정 클레임 추출
    */
-  private <T> T getClaimFromToken(String token, java.util.function.Function<Claims, T> claimsResolver) {
+  private <T> T getClaimFromToken(String token,
+      java.util.function.Function<Claims, T> claimsResolver) {
     Claims claims = getAllClaimsFromToken(token);
     return claimsResolver.apply(claims);
   }

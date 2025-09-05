@@ -2,6 +2,7 @@ package com.oboe.backend.user.service;
 
 import com.oboe.backend.common.exception.CustomException;
 import com.oboe.backend.common.exception.ErrorCode;
+import com.oboe.backend.common.util.PhoneNumberUtil;
 import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
@@ -126,10 +127,28 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
       nickname = userInfo.getName();
     }
     
-    // OAuth2 사용자 전화번호 처리 (전화번호가 없으면 기본값 사용)
+    // OAuth2 사용자 전화번호 처리 및 정규화
     String phoneNumber = userInfo.getPhoneNumber();
     if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
       phoneNumber = "SOCIAL_USER_" + userInfo.getId();
+      log.info("OAuth2 사용자 전화번호 없음 - 기본값 사용: {}", phoneNumber);
+    } else {
+      try {
+        // 휴대폰번호 정규화 (다양한 형식을 01012345678 형식으로 변환)
+        String normalizedPhoneNumber = PhoneNumberUtil.normalizePhoneNumber(phoneNumber);
+        
+        // 정규화된 휴대폰번호로 중복 검사
+        if (userRepository.existsByPhoneNumber(normalizedPhoneNumber)) {
+          log.warn("OAuth2 사용자 생성 실패 - 이미 가입된 휴대폰번호: {}", normalizedPhoneNumber);
+          throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS, "이미 가입된 휴대폰번호입니다.");
+        }
+        
+        phoneNumber = normalizedPhoneNumber;
+        log.info("OAuth2 휴대폰번호 정규화 성공: '{}' -> '{}'", userInfo.getPhoneNumber(), normalizedPhoneNumber);
+      } catch (IllegalArgumentException e) {
+        log.warn("OAuth2 휴대폰번호 정규화 실패: '{}', 기본값 사용", phoneNumber, e);
+        phoneNumber = "SOCIAL_USER_" + userInfo.getId();
+      }
     }
 
     User user = User.builder()

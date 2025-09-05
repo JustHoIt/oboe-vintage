@@ -7,6 +7,7 @@ import com.oboe.backend.message.dto.SmsAuthRequestDto;
 import com.oboe.backend.common.exception.CustomException;
 import com.oboe.backend.common.exception.ErrorCode;
 import com.oboe.backend.common.dto.ResponseDto;
+import com.oboe.backend.common.util.PhoneNumberUtil;
 import com.oboe.backend.user.repository.UserRepository;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -51,21 +52,26 @@ public class MessageService {
       throw new CustomException(ErrorCode.SMS_INVALID_PHONE_NUMBER, "휴대폰 번호를 입력해주세요.");
     }
 
-    // 휴대폰 번호 형식 검증
-    if (!dto.getPhoneNumber().matches("^01[016789]\\d{7,8}$")) {
+    // 휴대폰번호 정규화
+    String normalizedPhoneNumber;
+    try {
+      normalizedPhoneNumber = PhoneNumberUtil.normalizePhoneNumber(dto.getPhoneNumber());
+      log.info("SMS 발송 휴대폰번호 정규화: '{}' -> '{}'", dto.getPhoneNumber(), normalizedPhoneNumber);
+    } catch (IllegalArgumentException e) {
+      log.warn("SMS 발송 휴대폰번호 정규화 실패: '{}'", dto.getPhoneNumber(), e);
       throw new CustomException(ErrorCode.SMS_INVALID_PHONE_NUMBER, "올바른 휴대폰 번호 형식이 아닙니다.");
     }
 
-    // 이미 가입된 휴대폰 번호인지 확인 (비용 절약)
-    if (userRepository.existsByPhoneNumber(dto.getPhoneNumber())) {
-      log.warn("이미 가입된 휴대폰 번호로 SMS 발송 시도 - 휴대폰번호: {}", dto.getPhoneNumber());
+    // 이미 가입된 휴대폰 번호인지 확인 (정규화된 번호로 확인)
+    if (userRepository.existsByPhoneNumber(normalizedPhoneNumber)) {
+      log.warn("이미 가입된 휴대폰 번호로 SMS 발송 시도 - 휴대폰번호: {}", normalizedPhoneNumber);
       throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS, "이미 가입된 휴대폰 번호입니다.");
     }
 
-    // 인증번호 재발송 제한 확인 (1분 내 재발송 방지)
-    String rateLimitKey = "sms_rate_limit:" + dto.getPhoneNumber();
+    // 인증번호 재발송 제한 확인 (1분 내 재발송 방지) - 정규화된 번호로 확인
+    String rateLimitKey = "sms_rate_limit:" + normalizedPhoneNumber;
     if (redisComponent.hasKey(rateLimitKey)) {
-      log.warn("인증번호 재발송 제한 - 휴대폰번호: {}", dto.getPhoneNumber());
+      log.warn("인증번호 재발송 제한 - 휴대폰번호: {}", normalizedPhoneNumber);
       throw new CustomException(ErrorCode.SMS_QUOTA_EXCEEDED, "인증번호는 1분 후에 다시 요청해주세요.");
     }
 
@@ -75,21 +81,21 @@ public class MessageService {
     String verificationCode = sixRandomCode();
     Message message = new Message();
     message.setFrom(fromNumber);
-    message.setTo(dto.getPhoneNumber());
+    message.setTo(normalizedPhoneNumber); // 정규화된 번호로 SMS 발송
     message.setText("[Oboe-Vintage] 본인 인증번호는 " + verificationCode + "입니다. 정확히 입력해주세요.");
 
     try {
       messageService.send(message);
       log.info("SMS 발송 성공 - 수신번호: {}, 인증번호: {}", message.getTo(), verificationCode);
 
-      // Redis에 인증번호 저장 (3분간 유효)
-      String redisKey = "sms_auth:" + dto.getPhoneNumber();
+      // Redis에 인증번호 저장 (3분간 유효) - 정규화된 번호로 저장
+      String redisKey = "sms_auth:" + normalizedPhoneNumber;
       redisComponent.setExpiration(redisKey, verificationCode, SMS_CODE_EXPIRATION);
       log.info("인증번호 Redis 저장 완료 - 키: {}, 만료시간: 3분", redisKey);
 
-      // 재발송 제한 설정 (1분간)
+      // 재발송 제한 설정 (1분간) - 정규화된 번호로 설정
       redisComponent.setExpiration(rateLimitKey, "limited", Duration.ofMinutes(1));
-      log.info("재발송 제한 설정 완료 - 휴대폰번호: {}, 제한시간: 1분", dto.getPhoneNumber());
+      log.info("재발송 제한 설정 완료 - 휴대폰번호: {}, 제한시간: 1분", normalizedPhoneNumber);
 
       messageHistoryRecord(message, true, null);
       return ResponseDto.success("인증번호 발송에 성공했습니다.", "인증번호가 발송되었습니다.");
@@ -123,12 +129,22 @@ public class MessageService {
       throw new CustomException(ErrorCode.SMS_INVALID_VERIFICATION_CODE, "인증번호를 입력해주세요.");
     }
 
-    // Redis에서 인증번호 조회
-    String redisKey = "sms_auth:" + dto.getPhoneNumber();
+    // 휴대폰번호 정규화
+    String normalizedPhoneNumber;
+    try {
+      normalizedPhoneNumber = PhoneNumberUtil.normalizePhoneNumber(dto.getPhoneNumber());
+      log.info("SMS 인증 휴대폰번호 정규화: '{}' -> '{}'", dto.getPhoneNumber(), normalizedPhoneNumber);
+    } catch (IllegalArgumentException e) {
+      log.warn("SMS 인증 휴대폰번호 정규화 실패: '{}'", dto.getPhoneNumber(), e);
+      throw new CustomException(ErrorCode.SMS_INVALID_PHONE_NUMBER, "올바른 휴대폰 번호 형식이 아닙니다.");
+    }
+
+    // Redis에서 인증번호 조회 (정규화된 번호로 조회)
+    String redisKey = "sms_auth:" + normalizedPhoneNumber;
     Object storedCode = redisComponent.get(redisKey);
     
     if (storedCode == null) {
-      log.warn("인증번호 만료 또는 존재하지 않음 - 휴대폰번호: {}", dto.getPhoneNumber());
+      log.warn("인증번호 만료 또는 존재하지 않음 - 휴대폰번호: {}", normalizedPhoneNumber);
       throw new CustomException(ErrorCode.SMS_VERIFICATION_EXPIRED, "인증번호가 만료되었거나 존재하지 않습니다.");
     }
     
@@ -137,15 +153,15 @@ public class MessageService {
       // 인증 성공 시 인증번호 삭제하고 인증 완료 상태 저장
       redisComponent.delete(redisKey);
       
-      // 인증 완료 상태 저장 (10분간 유효)
-      String verifiedKey = "sms_verified:" + dto.getPhoneNumber();
+      // 인증 완료 상태 저장 (10분간 유효) - 정규화된 번호로 저장
+      String verifiedKey = "sms_verified:" + normalizedPhoneNumber;
       redisComponent.setExpiration(verifiedKey, "verified", Duration.ofMinutes(10));
       
-      log.info("SMS 인증 성공 - 휴대폰번호: {}", dto.getPhoneNumber());
+      log.info("SMS 인증 성공 - 휴대폰번호: {}", normalizedPhoneNumber);
       return ResponseDto.success("인증이 완료되었습니다.", "인증 성공");
     } else {
       log.warn("SMS 인증 실패 - 휴대폰번호: {}, 입력된 인증번호: {}, 저장된 인증번호: {}", 
-               dto.getPhoneNumber(), dto.getVerificationCode(), storedCode);
+               normalizedPhoneNumber, dto.getVerificationCode(), storedCode);
       throw new CustomException(ErrorCode.SMS_VERIFICATION_FAILED, "인증번호가 일치하지 않습니다.");
     }
   }
