@@ -5,6 +5,7 @@ import com.oboe.backend.common.dto.ResponseDto;
 import com.oboe.backend.common.exception.CustomException;
 import com.oboe.backend.common.exception.ErrorCode;
 import com.oboe.backend.common.util.JwtUtil;
+import com.oboe.backend.common.util.PhoneNumberUtil;
 import com.oboe.backend.user.dto.LoginDto;
 import com.oboe.backend.user.dto.LoginResponseDto;
 import com.oboe.backend.user.dto.SignUpDto;
@@ -35,19 +36,23 @@ public class UserService {
 
   // 회원가입 (SMS 인증 완료 후)
   public ResponseDto<User> signUp(SignUpDto dto) {
-    // 1. SMS 인증 상태 확인
-    validateSmsAuthentication(dto.getPhoneNumber());
+    // 1. 휴대폰번호 정규화
+    String normalizedPhoneNumber = PhoneNumberUtil.normalizePhoneNumber(dto.getPhoneNumber());
+    log.info("회원가입 휴대폰번호 정규화: '{}' -> '{}'", dto.getPhoneNumber(), normalizedPhoneNumber);
+    
+    // 2. SMS 인증 상태 확인 (정규화된 번호로 확인)
+    validateSmsAuthentication(normalizedPhoneNumber);
 
-    // 2. 중복 체크
-    validateUniqueFields(dto);
+    // 3. 중복 체크 (정규화된 번호로 확인)
+    validateUniqueFields(dto, normalizedPhoneNumber);
 
-    // 3. 사용자 생성 및 저장
+    // 4. 사용자 생성 및 저장 (정규화된 번호로 저장)
     User user = User.builder()
         .email(dto.getEmail())
         .password(passwordEncoder.encode(dto.getPassword()))
         .name(dto.getName())
         .nickname(dto.getNickname())
-        .phoneNumber(dto.getPhoneNumber())
+        .phoneNumber(normalizedPhoneNumber)
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
         .roadAddress(dto.getRoadAddress())
@@ -62,8 +67,8 @@ public class UserService {
 
     userRepository.save(user);
 
-    // 4. SMS 인증 상태 삭제 (일회성 사용)
-    String authKey = "sms_verified:" + dto.getPhoneNumber();
+    // 5. SMS 인증 상태 삭제 (일회성 사용) - 정규화된 번호로 삭제
+    String authKey = "sms_verified:" + normalizedPhoneNumber;
     redisComponent.delete(authKey);
 
     log.info("회원가입 완료 - 이메일: {}, 닉네임: {}", dto.getEmail(), dto.getNickname());
@@ -78,15 +83,17 @@ public class UserService {
     }
   }
 
-  // 중복 필드 검증 (휴대폰 번호는 MessageService에서 이미 검증됨)
-  private void validateUniqueFields(SignUpDto dto) {
+  // 중복 필드 검증 (정규화된 휴대폰번호로 중복 체크)
+  private void validateUniqueFields(SignUpDto dto, String normalizedPhoneNumber) {
     if (userRepository.existsByEmail(dto.getEmail())) {
       throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS, "이미 가입된 이메일입니다.");
     }
 
-    // 닉네임 중복 허용으로 제거됨
-    // 휴대폰 번호 중복 체크는 MessageService에서 SMS 발송 전에 이미 처리됨
-    // SMS 인증이 완료된 상태이므로 중복 체크 불필요
+    // 정규화된 휴대폰번호로 중복 체크
+    if (userRepository.existsByPhoneNumber(normalizedPhoneNumber)) {
+      log.warn("이미 가입된 휴대폰번호로 회원가입 시도 - 휴대폰번호: {}", normalizedPhoneNumber);
+      throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS, "이미 가입된 휴대폰번호입니다.");
+    }
   }
 
   // 사용자 조회 (이메일)
