@@ -97,3 +97,5 @@ coolsms:
   apikey: ${sms_key}
   apisecret: ${sms_secret}
   fromnumber: ${sms_number}
+jwt:
+  secret: ${jwt_secret_code}
