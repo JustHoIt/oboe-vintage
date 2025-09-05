@@ -55,7 +55,11 @@ public class User extends BaseTimeEntity {
   @Column(nullable = false)
   private UserStatus status;
 
-  private String address;
+  private String roadAddress;
+
+  private String detailAddress;
+
+  private String zipCode;
 
   private LocalDate birthDate;
 
@@ -89,8 +93,10 @@ public class User extends BaseTimeEntity {
     this.phoneNumber = phoneNumber;
   }
   
-  public void setAddress(String address) {
-    this.address = address;
+  public void setAddress(String roadAddress, String detailAddress, String zipCode) {
+    this.roadAddress = roadAddress;
+    this.detailAddress = detailAddress;
+    this.zipCode = zipCode;
   }
   
   public void setStatus(UserStatus status) {

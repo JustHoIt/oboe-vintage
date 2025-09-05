@@ -48,13 +48,19 @@ public class SignUpDto {
   private String phoneNumber;
 
   @Schema(description = "사용자 주소", example = "서울시 강남구 테헤란로 123")
-  private String address;
+  private String roadAddress;
+
+  @Schema(description = "사용자 상세 주소", example = "2층 A201호")
+  private String detailAddress;
+
+  @Schema(description = "우편 번호", example = "02111")
+  private String zipCode;
 
   @Schema(description = "사용자 생일", example = "1997-12-12")
   private LocalDate birthDate;
 
-  @Pattern(regexp = "^(남|여)$", message = "성별은 '남' 또는 '여'만 입력 가능합니다.")
-  @Schema(description = "사용자 성별", example = "남", allowableValues = {"남", "여"})
+  @Pattern(regexp = "^(남성|여성)$", message = "성별은 '남성' 또는 '여성'만 입력 가능합니다.")
+  @Schema(description = "사용자 성별", example = "남", allowableValues = {"남성", "여성"})
   private String gender;
 
   @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")

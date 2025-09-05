@@ -27,6 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -45,7 +46,7 @@ class UserSignUpIntegrationTest {
 
   @MockBean
   private RedisComponent redisComponent;
-  
+
   @MockBean
   private MessageService messageService;
 
@@ -59,16 +60,19 @@ class UserSignUpIntegrationTest {
   void setUp() {
     // 테스트 데이터 초기화
     userRepository.deleteAll();
-    
+
     // Redis Mock 설정
     when(redisComponent.hasKey(anyString())).thenReturn(false);
     when(redisComponent.get(anyString())).thenReturn(null);
     when(redisComponent.delete(anyString())).thenReturn(true);
-    doNothing().when(redisComponent).setExpiration(anyString(), anyString(), any(java.time.Duration.class));
-    
+    doNothing().when(redisComponent)
+        .setExpiration(anyString(), anyString(), any(java.time.Duration.class));
+
     // MessageService Mock 설정
-    when(messageService.sendMessage(any(SmsAuthRequestDto.class))).thenReturn(ResponseDto.success("인증번호 발송에 성공했습니다."));
-    when(messageService.verifyMessage(any(SmsAuthRequestDto.class))).thenReturn(ResponseDto.success("인증이 완료되었습니다."));
+    when(messageService.sendMessage(any(SmsAuthRequestDto.class))).thenReturn(
+        ResponseDto.success("인증번호 발송에 성공했습니다."));
+    when(messageService.verifyMessage(any(SmsAuthRequestDto.class))).thenReturn(
+        ResponseDto.success("인증이 완료되었습니다."));
 
     smsRequest = SmsAuthRequestDto.builder()
         .phoneNumber("01012345678")
@@ -80,9 +84,11 @@ class UserSignUpIntegrationTest {
         .name("홍길동")
         .nickname("테스트유저")
         .phoneNumber("01012345678")
-        .address("서울시 강남구")
+        .roadAddress("서울시 강남구")
+        .detailAddress("1층")
+        .zipCode("02111")
         .birthDate(LocalDate.of(1990, 1, 1))
-        .gender("남")
+        .gender("남성")
         .profileImg("https://example.com/profile.jpg")
         .build();
   }
@@ -197,7 +203,7 @@ class UserSignUpIntegrationTest {
 
     // Redis에 올바른 인증번호 저장 (Mock 설정)
     when(redisComponent.get("sms_auth:01012345678")).thenReturn("ABC123");
-    
+
     // 잘못된 인증번호에 대해서는 실패 반환하도록 Mock 설정
     when(messageService.verifyMessage(argThat(dto -> "WRONG".equals(dto.getVerificationCode()))))
         .thenReturn(ResponseDto.error(400, "인증번호가 일치하지 않습니다."));
@@ -268,6 +274,6 @@ class UserSignUpIntegrationTest {
             .content(objectMapper.writeValueAsString(signUpRequest)))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.code").value(409)); // 409 CONFLICT가 올바른 응답
+        .andExpect(jsonPath("$.code").value(409));
   }
 }

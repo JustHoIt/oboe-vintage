@@ -30,10 +30,10 @@ public class UserService {
   public ResponseDto<User> signUp(SignUpDto dto) {
     // 1. SMS 인증 상태 확인
     validateSmsAuthentication(dto.getPhoneNumber());
-    
+
     // 2. 중복 체크
     validateUniqueFields(dto);
-    
+
     // 3. 사용자 생성 및 저장
     User user = User.builder()
         .email(dto.getEmail())
@@ -43,20 +43,22 @@ public class UserService {
         .phoneNumber(dto.getPhoneNumber())
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
-        .address(dto.getAddress())
+        .roadAddress(dto.getRoadAddress())
+        .detailAddress(dto.getDetailAddress())
+        .zipCode(dto.getZipCode())
         .birthDate(dto.getBirthDate())
         .gender(dto.getGender())
         .isBanned(false)
         .socialProvider(SocialProvider.LOCAL)
         .profileImg(dto.getProfileImg())
         .build();
-    
+
     userRepository.save(user);
-    
+
     // 4. SMS 인증 상태 삭제 (일회성 사용)
     String authKey = "sms_verified:" + dto.getPhoneNumber();
     redisComponent.delete(authKey);
-    
+
     log.info("회원가입 완료 - 이메일: {}, 닉네임: {}", dto.getEmail(), dto.getNickname());
     return ResponseDto.success(user);
   }
@@ -74,11 +76,11 @@ public class UserService {
     if (userRepository.existsByEmail(dto.getEmail())) {
       throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
-    
+
     if (userRepository.existsByNickname(dto.getNickname())) {
       throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
     }
-    
+
     // 휴대폰 번호 중복 체크는 MessageService에서 SMS 발송 전에 이미 처리됨
     // SMS 인증이 완료된 상태이므로 중복 체크 불필요
   }

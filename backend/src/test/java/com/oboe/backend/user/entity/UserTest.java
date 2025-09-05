@@ -25,9 +25,11 @@ class UserTest {
         .phoneNumber("010-1234-5678")
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
-        .address("서울시 강남구")
+        .roadAddress("서울시 강남구")
+        .detailAddress("1층")
+        .zipCode("02111")
         .birthDate(LocalDate.of(1990, 1, 1))
-        .gender("M")
+        .gender("남성")
         .socialProvider(SocialProvider.LOCAL)
         .lastLoginAt(LocalDateTime.now())
         .isBanned(false)
@@ -75,9 +77,11 @@ class UserTest {
         .phoneNumber("010-1111-2222")
         .role(UserRole.ADMIN)
         .status(UserStatus.ACTIVE)
-        .address("부산시 해운대구")
+        .roadAddress("서울시 강남구")
+        .detailAddress("1층")
+        .zipCode("02111")
         .birthDate(birthDate)
-        .gender("F")
+        .gender("여성")
         .socialProvider(SocialProvider.KAKAO)
         .lastLoginAt(now)
         .isBanned(false)
@@ -90,9 +94,11 @@ class UserTest {
     assertThat(createdUser.getNickname()).isEqualTo("factory123");
     assertThat(createdUser.getRole()).isEqualTo(UserRole.ADMIN);
     assertThat(createdUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
-    assertThat(createdUser.getAddress()).isEqualTo("부산시 해운대구");
+    assertThat(createdUser.getRoadAddress()).isEqualTo("서울시 강남구");
+    assertThat(createdUser.getDetailAddress()).isEqualTo("1층");
+    assertThat(createdUser.getZipCode()).isEqualTo("02111");
     assertThat(createdUser.getBirthDate()).isEqualTo(birthDate);
-    assertThat(createdUser.getGender()).isEqualTo("F");
+    assertThat(createdUser.getGender()).isEqualTo("여성");
     assertThat(createdUser.getSocialProvider()).isEqualTo(SocialProvider.KAKAO);
     assertThat(createdUser.getLastLoginAt()).isEqualTo(now);
     assertThat(createdUser.isBanned()).isFalse();
@@ -105,20 +111,24 @@ class UserTest {
     // given
     String newName = "수정된이름";
     String newNickname = "수정된닉네임";
-    String newAddress = "수정된주소";
+    String newRoadAddress = "수정된주소";
+    String newDetailAddress = "수정된주소";
+    String newZipCode = "수정된 우편번호";
     UserStatus newStatus = UserStatus.SUSPENDED;
 
     // when
     user.setName(newName);
     user.setNickname(newNickname);
-    user.setAddress(newAddress);
+    user.setAddress(newRoadAddress, newDetailAddress, newZipCode);
     user.setStatus(newStatus);
     user.setBanned(true);
 
     // then
     assertThat(user.getName()).isEqualTo(newName);
     assertThat(user.getNickname()).isEqualTo(newNickname);
-    assertThat(user.getAddress()).isEqualTo(newAddress);
+    assertThat(user.getDetailAddress()).isEqualTo(newRoadAddress);
+    assertThat(user.getRoadAddress()).isEqualTo(newDetailAddress);
+    assertThat(user.getZipCode()).isEqualTo(newZipCode);
     assertThat(user.getStatus()).isEqualTo(newStatus);
     assertThat(user.isBanned()).isTrue();
   }
