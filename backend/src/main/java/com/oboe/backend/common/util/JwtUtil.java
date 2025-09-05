@@ -23,7 +23,11 @@ public class JwtUtil {
   private final JwtConfig jwtConfig;
 
   private Key getSigningKey() {
-    byte[] keyBytes = jwtConfig.getSecret().getBytes(StandardCharsets.UTF_8);
+    String secret = jwtConfig.getSecret();
+    if (secret == null || secret.trim().isEmpty()) {
+      throw new IllegalStateException("JWT secret이 설정되지 않았습니다.");
+    }
+    byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
     return Keys.hmacShaKeyFor(keyBytes);
   }
 

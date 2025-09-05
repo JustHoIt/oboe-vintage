@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @Setter
 public class JwtConfig {
 
-  @Value("${jwt.secret:oboe-vintage-jwt-secret-key-for-development-only-change-in-production-must-be-at-least-32-characters-long}")
+  @Value("${jwt.secret}")
   private String secret;
   private long accessTokenExpiration = 86400000; // 24시간 (밀리초)
   private long refreshTokenExpiration = 604800000; // 7일 (밀리초)
