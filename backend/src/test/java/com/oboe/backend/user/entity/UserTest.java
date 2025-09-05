@@ -29,7 +29,7 @@ class UserTest {
         .detailAddress("1층")
         .zipCode("02111")
         .birthDate(LocalDate.of(1990, 1, 1))
-        .gender("남성")
+        .gender("M")
         .socialProvider(SocialProvider.LOCAL)
         .lastLoginAt(LocalDateTime.now())
         .isBanned(false)
@@ -81,7 +81,7 @@ class UserTest {
         .detailAddress("1층")
         .zipCode("02111")
         .birthDate(birthDate)
-        .gender("여성")
+        .gender("F")
         .socialProvider(SocialProvider.KAKAO)
         .lastLoginAt(now)
         .isBanned(false)
@@ -98,7 +98,7 @@ class UserTest {
     assertThat(createdUser.getDetailAddress()).isEqualTo("1층");
     assertThat(createdUser.getZipCode()).isEqualTo("02111");
     assertThat(createdUser.getBirthDate()).isEqualTo(birthDate);
-    assertThat(createdUser.getGender()).isEqualTo("여성");
+    assertThat(createdUser.getGender()).isEqualTo("F");
     assertThat(createdUser.getSocialProvider()).isEqualTo(SocialProvider.KAKAO);
     assertThat(createdUser.getLastLoginAt()).isEqualTo(now);
     assertThat(createdUser.isBanned()).isFalse();
@@ -216,5 +216,94 @@ class UserTest {
 
     // then
     assertThat(user.isBanned()).isFalse();
+  }
+
+  @Test
+  @DisplayName("OAuth2 사용자 생성 테스트")
+  void createOAuth2User() {
+    // given & when
+    User oauthUser = User.builder()
+        .email("oauth@kakao.com")
+        .name("OAuth사용자")
+        .nickname("oauthuser")
+        .socialProvider(SocialProvider.KAKAO)
+        .socialId("123456789")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .profileImg("https://example.com/profile.jpg")
+        .lastLoginAt(LocalDateTime.now())
+        .isBanned(false)
+        .build();
+
+    // then
+    assertThat(oauthUser.getEmail()).isEqualTo("oauth@kakao.com");
+    assertThat(oauthUser.getName()).isEqualTo("OAuth사용자");
+    assertThat(oauthUser.getNickname()).isEqualTo("oauthuser");
+    assertThat(oauthUser.getSocialProvider()).isEqualTo(SocialProvider.KAKAO);
+    assertThat(oauthUser.getSocialId()).isEqualTo("123456789");
+    assertThat(oauthUser.getProfileImg()).isEqualTo("https://example.com/profile.jpg");
+  }
+
+  @Test
+  @DisplayName("OAuth2 필드 수정 테스트")
+  void updateOAuth2Fields() {
+    // given
+    String newSocialId = "987654321";
+    String newProfileImg = "https://example.com/new-profile.jpg";
+    SocialProvider newSocialProvider = SocialProvider.KAKAO;
+
+    // when
+    user.setSocialId(newSocialId);
+    user.setProfileImg(newProfileImg);
+    user.setSocialProvider(newSocialProvider);
+
+    // then
+    assertThat(user.getSocialId()).isEqualTo(newSocialId);
+    assertThat(user.getProfileImg()).isEqualTo(newProfileImg);
+    assertThat(user.getSocialProvider()).isEqualTo(newSocialProvider);
+  }
+
+  @Test
+  @DisplayName("로컬 사용자를 OAuth2 사용자로 전환 테스트")
+  void convertLocalUserToOAuth2() {
+    // given
+    assertThat(user.getSocialProvider()).isEqualTo(SocialProvider.LOCAL);
+    assertThat(user.getSocialId()).isNull();
+
+    // when
+    user.setSocialProvider(SocialProvider.KAKAO);
+    user.setSocialId("123456789");
+    user.setProfileImg("https://example.com/kakao-profile.jpg");
+
+    // then
+    assertThat(user.getSocialProvider()).isEqualTo(SocialProvider.KAKAO);
+    assertThat(user.getSocialId()).isEqualTo("123456789");
+    assertThat(user.getProfileImg()).isEqualTo("https://example.com/kakao-profile.jpg");
+  }
+
+  @Test
+  @DisplayName("네이버 OAuth2 사용자 생성 테스트")
+  void createNaverOAuth2User() {
+    // given & when
+    User naverUser = User.builder()
+        .email("naver@naver.com")
+        .name("네이버사용자")
+        .nickname("naveruser")
+        .socialProvider(SocialProvider.NAVER)
+        .socialId("naver123456")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .profileImg("https://example.com/naver-profile.jpg")
+        .lastLoginAt(LocalDateTime.now())
+        .isBanned(false)
+        .build();
+
+    // then
+    assertThat(naverUser.getEmail()).isEqualTo("naver@naver.com");
+    assertThat(naverUser.getName()).isEqualTo("네이버사용자");
+    assertThat(naverUser.getNickname()).isEqualTo("naveruser");
+    assertThat(naverUser.getSocialProvider()).isEqualTo(SocialProvider.NAVER);
+    assertThat(naverUser.getSocialId()).isEqualTo("naver123456");
+    assertThat(naverUser.getProfileImg()).isEqualTo("https://example.com/naver-profile.jpg");
   }
 }

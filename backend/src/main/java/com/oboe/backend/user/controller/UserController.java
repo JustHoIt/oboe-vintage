@@ -31,4 +31,5 @@ public class UserController {
     log.info("회원가입 시작 - 이메일: {}, 닉네임: {}", dto.getEmail(), dto.getNickname());
     return ResponseEntity.ok(userService.signUp(dto));
   }
+
 }

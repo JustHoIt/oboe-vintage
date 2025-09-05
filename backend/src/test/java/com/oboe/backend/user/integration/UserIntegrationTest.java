@@ -1,11 +1,17 @@
 package com.oboe.backend.user.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.oboe.backend.config.JpaConfig;
 import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
 import com.oboe.backend.user.entity.UserStatus;
 import com.oboe.backend.user.repository.UserRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,12 +21,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -56,7 +56,7 @@ class UserIntegrationTest {
         .detailAddress("1층")
         .zipCode("02111")
         .birthDate(LocalDate.of(1990, 1, 1))
-        .gender("남성")
+        .gender("M")
         .socialProvider(SocialProvider.LOCAL)
         .lastLoginAt(LocalDateTime.now())
         .isBanned(false)
@@ -153,8 +153,8 @@ class UserIntegrationTest {
   }
 
   @Test
-  @DisplayName("중복 닉네임 검증 통합 테스트")
-  void duplicateNicknameValidation() {
+  @DisplayName("닉네임 중복 허용 통합 테스트")
+  void allowDuplicateNickname() {
     // given
     User user1 = createTestUser();
     user1.setNickname("duplicate123");
@@ -163,14 +163,17 @@ class UserIntegrationTest {
 
     User user2 = createTestUser();
     user2.setEmail("different@example.com");
-    user2.setNickname("duplicate123");
+    user2.setNickname("duplicate123"); // 같은 닉네임 사용
     user2.setPhoneNumber("010-9999-8888");
 
-    // when & then
-    assertThatThrownBy(() -> {
-      userRepository.save(user2);
-      entityManager.flush();
-    }).isInstanceOf(Exception.class);
+    // when
+    User savedUser2 = userRepository.save(user2);
+    entityManager.flush();
+
+    // then - 닉네임 중복이 허용되어 정상 저장됨
+    assertThat(savedUser2).isNotNull();
+    assertThat(savedUser2.getNickname()).isEqualTo("duplicate123");
+    assertThat(savedUser2.getEmail()).isEqualTo("different@example.com");
   }
 
   @Test
@@ -309,11 +312,9 @@ class UserIntegrationTest {
 
     // when & then
     assertThat(userRepository.existsByEmail("test@example.com")).isTrue();
-    assertThat(userRepository.existsByNickname("test123")).isTrue();
     assertThat(userRepository.existsByPhoneNumber("010-1234-5678")).isTrue();
 
     assertThat(userRepository.existsByEmail("nonexistent@example.com")).isFalse();
-    assertThat(userRepository.existsByNickname("nonexistent")).isFalse();
     assertThat(userRepository.existsByPhoneNumber("010-0000-0000")).isFalse();
   }
 
@@ -330,7 +331,7 @@ class UserIntegrationTest {
         .detailAddress("테스트 상세주소")
         .zipCode("00000")
         .birthDate(LocalDate.of(1990, 1, 1))
-        .gender("남성")
+        .gender("M")
         .socialProvider(SocialProvider.LOCAL)
         .lastLoginAt(LocalDateTime.now())
         .isBanned(false)

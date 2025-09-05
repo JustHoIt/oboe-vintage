@@ -1,5 +1,6 @@
 HELP.md
 SWAGGER_GUIDE.md
+OAUTH2_SETUP.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar

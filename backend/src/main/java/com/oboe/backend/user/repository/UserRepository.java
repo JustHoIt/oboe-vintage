@@ -25,8 +25,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 이메일 존재 여부 확인
     boolean existsByEmail(String email);
 
-    // 닉네임 존재 여부 확인
-    boolean existsByNickname(String nickname);
 
     // 전화번호 존재 여부 확인
     boolean existsByPhoneNumber(String phoneNumber);
@@ -52,6 +50,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 소셜 프로바이더별 사용자 조회
     List<User> findBySocialProvider(SocialProvider socialProvider);
+
+    // 소셜 ID로 사용자 찾기
+    Optional<User> findBySocialId(String socialId);
+
+    // 이메일과 소셜 프로바이더로 사용자 찾기
+    Optional<User> findByEmailAndSocialProvider(String email, SocialProvider socialProvider);
+
+    // 소셜 ID 존재 여부 확인
+    boolean existsBySocialId(String socialId);
 
     // 특정 기간 이후 로그인한 사용자 조회
     @Query("SELECT u FROM User u WHERE u.lastLoginAt >= :since")

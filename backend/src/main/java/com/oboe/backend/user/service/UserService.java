@@ -1,14 +1,14 @@
 package com.oboe.backend.user.service;
 
 import com.oboe.backend.common.component.RedisComponent;
+import com.oboe.backend.common.dto.ResponseDto;
 import com.oboe.backend.common.exception.CustomException;
 import com.oboe.backend.common.exception.ErrorCode;
-import com.oboe.backend.common.dto.ResponseDto;
 import com.oboe.backend.user.dto.SignUpDto;
+import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
 import com.oboe.backend.user.entity.UserStatus;
-import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,13 +74,10 @@ public class UserService {
   // 중복 필드 검증 (휴대폰 번호는 MessageService에서 이미 검증됨)
   private void validateUniqueFields(SignUpDto dto) {
     if (userRepository.existsByEmail(dto.getEmail())) {
-      throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
+      throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS, "이미 가입된 이메일입니다.");
     }
 
-    if (userRepository.existsByNickname(dto.getNickname())) {
-      throw new CustomException(ErrorCode.NICKNAME_ALREADY_EXISTS);
-    }
-
+    // 닉네임 중복 허용으로 제거됨
     // 휴대폰 번호 중복 체크는 MessageService에서 SMS 발송 전에 이미 처리됨
     // SMS 인증이 완료된 상태이므로 중복 체크 불필요
   }

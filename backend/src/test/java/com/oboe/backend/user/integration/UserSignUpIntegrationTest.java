@@ -1,8 +1,14 @@
 package com.oboe.backend.user.integration;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oboe.backend.common.component.RedisComponent;
@@ -27,9 +33,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -88,7 +91,7 @@ class UserSignUpIntegrationTest {
         .detailAddress("1층")
         .zipCode("02111")
         .birthDate(LocalDate.of(1990, 1, 1))
-        .gender("남성")
+        .gender("M")
         .profileImg("https://example.com/profile.jpg")
         .build();
   }
@@ -246,34 +249,5 @@ class UserSignUpIntegrationTest {
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.success").value(false))
         .andExpect(jsonPath("$.code").value(409)); // 409 CONFLICT가 올바른 응답
-  }
-
-  @Test
-  @DisplayName("닉네임 중복으로 회원가입 시도 - 실패")
-  void signUp_DuplicateNickname_Fail() throws Exception {
-    // 먼저 사용자 생성
-    User existingUser = User.builder()
-        .email("existing@example.com")
-        .password("encoded_password")
-        .name("기존사용자")
-        .nickname("테스트유저")
-        .phoneNumber("01087654321")
-        .role(UserRole.USER)
-        .socialProvider(SocialProvider.LOCAL)
-        .status(UserStatus.ACTIVE)
-        .isBanned(false)
-        .build();
-    userRepository.save(existingUser);
-
-    // SMS 인증 완료 상태 설정 (Mock 설정)
-    when(redisComponent.hasKey("sms_verified:01012345678")).thenReturn(true);
-
-    // 같은 닉네임으로 회원가입 시도
-    mockMvc.perform(post("/api/v1/users/signup")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(signUpRequest)))
-        .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.code").value(409));
   }
 }

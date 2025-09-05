@@ -64,6 +64,7 @@ class MessageServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SMS_SEND_FAILED);
     }
 
+
     @Test
     @DisplayName("인증번호 발송 실패 - 이미 가입된 휴대폰 번호")
     void sendMessage_Fail_AlreadyRegisteredPhone() {

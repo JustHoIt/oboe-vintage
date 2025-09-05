@@ -153,13 +153,6 @@ class UserRepositoryTest {
     assertThat(userRepository.existsByEmail("nonexistent@example.com")).isFalse();
   }
 
-  @Test
-  @DisplayName("닉네임 존재 여부 확인 테스트")
-  void existsByNickname() {
-    // when & then
-    assertThat(userRepository.existsByNickname("hong123")).isTrue();
-    assertThat(userRepository.existsByNickname("nonexistent")).isFalse();
-  }
 
   @Test
   @DisplayName("전화번호 존재 여부 확인 테스트")

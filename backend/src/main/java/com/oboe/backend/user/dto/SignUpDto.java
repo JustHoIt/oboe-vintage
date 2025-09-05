@@ -25,8 +25,8 @@ public class SignUpDto {
 
   @NotBlank(message = "비밀번호는 필수입니다.")
   @Size(min = 8, max = 20, message = "비밀번호는 8자 이상 20자 이하여야 합니다.")
-  @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$", 
-           message = "비밀번호는 8-20자 영문, 숫자, 특수문자를 포함해야 합니다.")
+  @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$",
+      message = "비밀번호는 8-20자 영문, 숫자, 특수문자를 포함해야 합니다.")
   @Schema(description = "사용자 비밀번호", example = "password123!", required = true)
   private String password;
 
@@ -59,8 +59,8 @@ public class SignUpDto {
   @Schema(description = "사용자 생일", example = "1997-12-12")
   private LocalDate birthDate;
 
-  @Pattern(regexp = "^(남성|여성)$", message = "성별은 '남성' 또는 '여성'만 입력 가능합니다.")
-  @Schema(description = "사용자 성별", example = "남", allowableValues = {"남성", "여성"})
+  @Pattern(regexp = "^(M|F|U)$", message = "성별은 'M', 'F', 'U'만 입력 가능합니다.")
+  @Schema(description = "사용자 성별", example = "M", allowableValues = {"M", "F", "U"})
   private String gender;
 
   @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")

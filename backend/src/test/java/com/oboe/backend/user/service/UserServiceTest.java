@@ -85,7 +85,6 @@ class UserServiceTest {
     // given
     when(redisComponent.hasKey("sms_verified:01012345678")).thenReturn(true);
     when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-    when(userRepository.existsByNickname("테스트유저")).thenReturn(false);
     when(passwordEncoder.encode("password123!")).thenReturn("encoded_password");
     when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
@@ -139,22 +138,6 @@ class UserServiceTest {
     verify(userRepository, never()).save(any(User.class));
   }
 
-  @Test
-  @DisplayName("회원가입 실패 - 닉네임 중복")
-  void signUp_Fail_NicknameAlreadyExists() {
-    // given
-    when(redisComponent.hasKey("sms_verified:01012345678")).thenReturn(true);
-    when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-    when(userRepository.existsByNickname("테스트유저")).thenReturn(true);
-
-    // when & then
-    assertThatThrownBy(() -> userService.signUp(validSignUpDto))
-        .isInstanceOf(CustomException.class)
-        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NICKNAME_ALREADY_EXISTS);
-
-    // 사용자 저장되지 않았는지 확인
-    verify(userRepository, never()).save(any(User.class));
-  }
 
   @Test
   @DisplayName("이메일로 사용자 조회 성공")
@@ -231,7 +214,6 @@ class UserServiceTest {
 
     when(redisComponent.hasKey("sms_verified:01012345678")).thenReturn(true);
     when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-    when(userRepository.existsByNickname("테스트유저")).thenReturn(false);
     when(passwordEncoder.encode("password123!")).thenReturn("encoded_password");
     when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
