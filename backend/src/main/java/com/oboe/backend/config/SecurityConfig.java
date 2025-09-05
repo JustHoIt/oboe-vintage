@@ -1,5 +1,8 @@
 package com.oboe.backend.config;
 
+import com.oboe.backend.security.JwtAuthenticationFilter;
+import com.oboe.backend.security.OAuth2LoginFailureHandler;
+import com.oboe.backend.security.OAuth2LoginSuccessHandler;
 import com.oboe.backend.user.service.CustomOAuth2UserService;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final CustomOAuth2UserService customOAuth2UserService;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+  private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -32,22 +38,24 @@ public class SecurityConfig {
             .requestMatchers("/api/v1/health").permitAll()
             .requestMatchers("/api/v1/db-test/**").permitAll()
             .requestMatchers("/api/v1/users/signup/**").permitAll()
+            .requestMatchers("/api/v1/users/login").permitAll()
+            .requestMatchers("/api/v1/users/refresh").permitAll()
             .requestMatchers("/api/v1/message/**").permitAll()
             // OAuth2 관련 엔드포인트 허용
-            .requestMatchers("/api/auth/**", "/api/v1/Oauth/**", "/login/oauth2/**", "/oauth2/**").permitAll()
+            .requestMatchers("/api/auth/**", "/login/oauth2/**", "/oauth2/**").permitAll()
             // Swagger UI 접근 허용
             .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
             .requestMatchers("/api-docs/**", "/v3/api-docs/**").permitAll()
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().authenticated()
         )
+        .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
         .oauth2Login(oauth2 -> oauth2
             .userInfoEndpoint(userInfo -> userInfo
                 .userService(customOAuth2UserService)
             )
-            //임시 확인용
-            .defaultSuccessUrl("http://localhost:5173/user", true)
-            .failureUrl("http://localhost:5173/oauth2/error")
+            .successHandler(oAuth2LoginSuccessHandler)
+            .failureHandler(oAuth2LoginFailureHandler)
         );
 
     return http.build();

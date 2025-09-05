@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @Transactional
 @Import(JpaConfig.class)
+@DisplayName("User Repository 통합 테스트")
 class UserIntegrationTest {
 
   @Autowired
