@@ -1,4 +1,4 @@
-package com.oboe.backend.common.service;
+package com.oboe.backend.message.service;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -7,12 +7,18 @@ import static org.mockito.Mockito.*;
 import com.oboe.backend.message.repository.MessageHistoryRepository;
 import com.oboe.backend.common.component.RedisComponent;
 import com.oboe.backend.message.dto.SmsAuthRequestDto;
+import com.oboe.backend.user.dto.FindPasswordDto;
 import com.oboe.backend.common.exception.CustomException;
 import com.oboe.backend.common.exception.ErrorCode;
 import com.oboe.backend.common.dto.ResponseDto;
-import com.oboe.backend.message.service.MessageService;
 import com.oboe.backend.user.repository.UserRepository;
+import com.oboe.backend.user.entity.User;
+import com.oboe.backend.user.entity.SocialProvider;
+import com.oboe.backend.user.entity.UserRole;
+import com.oboe.backend.user.entity.UserStatus;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,34 +52,35 @@ class MessageServiceTest {
         ReflectionTestUtils.setField(messageService, "fromNumber", "01012345678");
     }
 
+    // ========== 회원가입 SMS 발송 테스트 ==========
+
     @Test
-    @DisplayName("인증번호 발송 성공 - 정상적인 휴대폰 번호")
+    @DisplayName("회원가입 인증번호 발송 성공 - 정상적인 휴대폰 번호")
     void sendMessage_Success() {
         // given
         SmsAuthRequestDto dto = SmsAuthRequestDto.builder()
                 .phoneNumber("01012345678")
                 .build();
 
-        when(userRepository.existsByPhoneNumber(dto.getPhoneNumber())).thenReturn(false);
-        when(redisComponent.hasKey(anyString())).thenReturn(false);
+        when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
+        when(redisComponent.hasKey("sms_rate_limit:01012345678")).thenReturn(false);
 
         // when & then - 실제 SMS 발송은 Mock으로 처리되지 않으므로 예외가 발생할 수 있음
-        // 이 테스트는 로직 검증에 집중하고, 실제 SMS 발송은 MessageServiceMockTest에서 처리
+        // 이 테스트는 로직 검증에 집중하고, 실제 SMS 발송은 통합 테스트에서 처리
         assertThatThrownBy(() -> messageService.sendMessage(dto))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SMS_SEND_FAILED);
     }
 
-
     @Test
-    @DisplayName("인증번호 발송 실패 - 이미 가입된 휴대폰 번호")
+    @DisplayName("회원가입 인증번호 발송 실패 - 이미 가입된 휴대폰 번호")
     void sendMessage_Fail_AlreadyRegisteredPhone() {
         // given
         SmsAuthRequestDto dto = SmsAuthRequestDto.builder()
                 .phoneNumber("01012345678")
                 .build();
 
-        when(userRepository.existsByPhoneNumber(dto.getPhoneNumber())).thenReturn(true);
+        when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(true);
 
         // when & then
         assertThatThrownBy(() -> messageService.sendMessage(dto))
@@ -86,14 +93,14 @@ class MessageServiceTest {
     }
 
     @Test
-    @DisplayName("인증번호 발송 실패 - 재발송 제한")
+    @DisplayName("회원가입 인증번호 발송 실패 - 재발송 제한")
     void sendMessage_Fail_RateLimit() {
         // given
         SmsAuthRequestDto dto = SmsAuthRequestDto.builder()
                 .phoneNumber("01012345678")
                 .build();
 
-        when(userRepository.existsByPhoneNumber(dto.getPhoneNumber())).thenReturn(false);
+        when(userRepository.existsByPhoneNumber("01012345678")).thenReturn(false);
         when(redisComponent.hasKey("sms_rate_limit:01012345678")).thenReturn(true);
 
         // when & then
@@ -104,7 +111,7 @@ class MessageServiceTest {
     }
 
     @Test
-    @DisplayName("인증번호 발송 실패 - 잘못된 휴대폰 번호 형식")
+    @DisplayName("회원가입 인증번호 발송 실패 - 잘못된 휴대폰 번호 형식")
     void sendMessage_Fail_InvalidPhoneFormat() {
         // given
         SmsAuthRequestDto dto = SmsAuthRequestDto.builder()
@@ -119,7 +126,7 @@ class MessageServiceTest {
     }
 
     @Test
-    @DisplayName("인증번호 발송 실패 - 빈 휴대폰 번호")
+    @DisplayName("회원가입 인증번호 발송 실패 - 빈 휴대폰 번호")
     void sendMessage_Fail_EmptyPhone() {
         // given
         SmsAuthRequestDto dto = SmsAuthRequestDto.builder()
@@ -132,6 +139,122 @@ class MessageServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SMS_INVALID_PHONE_NUMBER)
                 .hasMessage("휴대폰 번호를 입력해주세요.");
     }
+
+    // ========== 비밀번호 찾기 SMS 발송 테스트 ==========
+
+    @Test
+    @DisplayName("비밀번호 찾기 인증번호 발송 성공")
+    void sendPasswordResetMessage_Success() {
+        // given
+        User user = User.builder()
+                .id(1L)
+                .email("test@example.com")
+                .name("테스트사용자")
+                .nickname("testuser")
+                .phoneNumber("01012345678")
+                .role(UserRole.USER)
+                .status(UserStatus.ACTIVE)
+                .socialProvider(SocialProvider.LOCAL)
+                .isBanned(false)
+                .build();
+
+        FindPasswordDto dto = FindPasswordDto.builder()
+                .email("test@example.com")
+                .phoneNumber("01012345678")
+                .build();
+
+        when(userRepository.findByEmailAndPhoneNumberAndSocialProvider("test@example.com", "01012345678"))
+                .thenReturn(Optional.of(user));
+        when(redisComponent.hasKey("sms_rate_limit:01012345678")).thenReturn(false);
+
+        // when & then - 실제 SMS 발송은 Mock으로 처리되지 않으므로 예외가 발생할 수 있음
+        assertThatThrownBy(() -> messageService.sendPasswordResetMessage(dto))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SMS_SEND_FAILED);
+    }
+
+    @Test
+    @DisplayName("비밀번호 찾기 인증번호 발송 실패 - 사용자 없음")
+    void sendPasswordResetMessage_Fail_UserNotFound() {
+        // given
+        FindPasswordDto dto = FindPasswordDto.builder()
+                .email("notfound@example.com")
+                .phoneNumber("01012345678")
+                .build();
+
+        when(userRepository.findByEmailAndPhoneNumberAndSocialProvider("notfound@example.com", "01012345678"))
+                .thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> messageService.sendPasswordResetMessage(dto))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND)
+                .hasMessage("입력하신 정보와 일치하는 계정을 찾을 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("비밀번호 찾기 인증번호 발송 실패 - 비활성 사용자")
+    void sendPasswordResetMessage_Fail_InactiveUser() {
+        // given
+        User inactiveUser = User.builder()
+                .id(1L)
+                .email("test@example.com")
+                .name("테스트사용자")
+                .nickname("testuser")
+                .phoneNumber("01012345678")
+                .role(UserRole.USER)
+                .status(UserStatus.SUSPENDED)
+                .socialProvider(SocialProvider.LOCAL)
+                .isBanned(false)
+                .build();
+
+        FindPasswordDto dto = FindPasswordDto.builder()
+                .email("test@example.com")
+                .phoneNumber("01012345678")
+                .build();
+
+        when(userRepository.findByEmailAndPhoneNumberAndSocialProvider("test@example.com", "01012345678"))
+                .thenReturn(Optional.of(inactiveUser));
+
+        // when & then
+        assertThatThrownBy(() -> messageService.sendPasswordResetMessage(dto))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN)
+                .hasMessage("비활성화된 계정입니다.");
+    }
+
+    @Test
+    @DisplayName("비밀번호 찾기 인증번호 발송 실패 - 차단된 사용자")
+    void sendPasswordResetMessage_Fail_BannedUser() {
+        // given
+        User bannedUser = User.builder()
+                .id(1L)
+                .email("test@example.com")
+                .name("테스트사용자")
+                .nickname("testuser")
+                .phoneNumber("01012345678")
+                .role(UserRole.USER)
+                .status(UserStatus.ACTIVE)
+                .socialProvider(SocialProvider.LOCAL)
+                .isBanned(true)
+                .build();
+
+        FindPasswordDto dto = FindPasswordDto.builder()
+                .email("test@example.com")
+                .phoneNumber("01012345678")
+                .build();
+
+        when(userRepository.findByEmailAndPhoneNumberAndSocialProvider("test@example.com", "01012345678"))
+                .thenReturn(Optional.of(bannedUser));
+
+        // when & then
+        assertThatThrownBy(() -> messageService.sendPasswordResetMessage(dto))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN)
+                .hasMessage("정지된 계정입니다.");
+    }
+
+    // ========== 인증번호 검증 테스트 ==========
 
     @Test
     @DisplayName("인증번호 검증 성공")
@@ -153,7 +276,6 @@ class MessageServiceTest {
         assertThat(result.getMessage()).isEqualTo("인증이 완료되었습니다.");
         assertThat(result.getData()).isEqualTo("인증 성공");
 
-        // Redis 작업 확인
         verify(redisComponent).delete("sms_auth:01012345678");
         verify(redisComponent).setExpiration(eq("sms_verified:01012345678"), eq("verified"), eq(Duration.ofMinutes(10)));
     }
@@ -175,7 +297,6 @@ class MessageServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SMS_VERIFICATION_FAILED)
                 .hasMessage("인증번호가 일치하지 않습니다.");
 
-        // 인증 완료 상태 저장되지 않았는지 확인
         verify(redisComponent, never()).setExpiration(eq("sms_verified:01012345678"), anyString(), any(Duration.class));
     }
 
@@ -227,5 +348,28 @@ class MessageServiceTest {
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SMS_INVALID_PHONE_NUMBER)
                 .hasMessage("휴대폰 번호를 입력해주세요.");
+    }
+
+    // ========== 트랜잭션 테스트 ==========
+
+    @Test
+    @DisplayName("읽기 전용 트랜잭션 - verifyMessage 메서드")
+    void verifyMessage_ReadOnlyTransaction() {
+        // given
+        SmsAuthRequestDto dto = SmsAuthRequestDto.builder()
+                .phoneNumber("01012345678")
+                .verificationCode("ABC123")
+                .build();
+
+        when(redisComponent.get("sms_auth:01012345678")).thenReturn("ABC123");
+
+        // when
+        ResponseDto<String> result = messageService.verifyMessage(dto);
+
+        // then
+        assertThat(result.isSuccess()).isTrue();
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(messageHistoryRepository, never()).save(any());
     }
 }

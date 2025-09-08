@@ -40,6 +40,8 @@ public class SecurityConfig {
             .requestMatchers("/api/v1/users/signup/**").permitAll()
             .requestMatchers("/api/v1/users/login").permitAll()
             .requestMatchers("/api/v1/users/refresh").permitAll()
+            .requestMatchers("/api/v1/users/find-id").permitAll()
+            .requestMatchers("/api/v1/users/reset-password").permitAll()
             .requestMatchers("/api/v1/message/**").permitAll()
             // OAuth2 관련 엔드포인트 허용
             .requestMatchers("/api/auth/**", "/login/oauth2/**", "/oauth2/**").permitAll()

@@ -9,12 +9,16 @@ import com.oboe.backend.common.exception.CustomException;
 import com.oboe.backend.common.exception.ErrorCode;
 import com.oboe.backend.common.dto.ResponseDto;
 import com.oboe.backend.common.util.JwtUtil;
+import com.oboe.backend.user.dto.FindIdDto;
+import com.oboe.backend.user.dto.FindIdResponseDto;
 import com.oboe.backend.user.dto.LoginDto;
 import com.oboe.backend.user.dto.LoginResponseDto;
+import com.oboe.backend.user.dto.PasswordChangeDto;
 import com.oboe.backend.user.dto.SignUpDto;
 import com.oboe.backend.user.dto.TokenRefreshDto;
 import com.oboe.backend.user.dto.TokenResponseDto;
 import com.oboe.backend.user.dto.UserProfileDto;
+import com.oboe.backend.user.dto.UserUpdateDto;
 import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
@@ -129,7 +133,6 @@ class UserServiceTest {
         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SMS_VERIFICATION_REQUIRED)
         .hasMessage("SMS 인증이 필요합니다.");
 
-    // 사용자 저장되지 않았는지 확인
     verify(userRepository, never()).save(any(User.class));
   }
 
@@ -145,7 +148,6 @@ class UserServiceTest {
         .isInstanceOf(CustomException.class)
         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EMAIL_ALREADY_EXISTS);
 
-    // 사용자 저장되지 않았는지 확인
     verify(userRepository, never()).save(any(User.class));
   }
 
@@ -164,6 +166,8 @@ class UserServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.getEmail()).isEqualTo("test@example.com");
     assertThat(result.getNickname()).isEqualTo("테스트유저");
+
+    verify(userRepository, never()).save(any(User.class));
   }
 
   @Test
@@ -191,6 +195,8 @@ class UserServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.getId()).isEqualTo(1L);
     assertThat(result.getEmail()).isEqualTo("test@example.com");
+
+    verify(userRepository, never()).save(any(User.class));
   }
 
   @Test
@@ -203,6 +209,28 @@ class UserServiceTest {
     assertThatThrownBy(() -> userService.findById(999L))
         .isInstanceOf(CustomException.class)
         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+  }
+
+  @Test
+  @DisplayName("아이디 찾기 성공")
+  void findId_Success() {
+    // given
+    FindIdDto dto = FindIdDto.builder()
+        .name("홍길동")
+        .phoneNumber("01012345678")
+        .build();
+
+    when(userRepository.findByNameAndPhoneNumberAndSocialProvider("홍길동", "01012345678"))
+        .thenReturn(Optional.of(savedUser));
+
+    // when
+    ResponseDto<FindIdResponseDto> result = userService.findId(dto);
+
+    // then
+    assertThat(result.isSuccess()).isTrue();
+    assertThat(result.getData().getEmail()).isEqualTo("test@example.com");
+
+    verify(userRepository, never()).save(any(User.class));
   }
 
   @Test
@@ -235,6 +263,7 @@ class UserServiceTest {
     assertThat(result.isSuccess()).isTrue();
     assertThat(result.getCode()).isEqualTo(200);
     assertThat(result.getData()).isNotNull();
+
     verify(userRepository).save(any(User.class));
   }
 
@@ -628,6 +657,7 @@ class UserServiceTest {
     verify(jwtUtil).isTokenExpired("valid.access.token");
     verify(jwtUtil).getEmailFromToken("valid.access.token");
     verify(userRepository).findByEmail("test@example.com");
+    verify(userRepository, never()).save(any(User.class));
   }
 
   @Test
