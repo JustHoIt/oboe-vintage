@@ -135,6 +135,9 @@ public class User extends BaseTimeEntity {
     this.gender = gender;
   }
 
+  public void setPassword(String password) {
+    this.password = password;
+  }
 
   // 비즈니스 로직을 위한 메서드들
   public void updateLastLoginAt() {
