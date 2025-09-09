@@ -27,7 +27,7 @@ public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
     
     // 프론트엔드로 리다이렉트하면서 에러 메시지 전달
     String redirectUrl = String.format(
-      "http://localhost:5173/login?error=oauth2_failed&message=%s",
+      "http://localhost:5173/oauth2/error?error=oauth2_failed&message=%s",
       java.net.URLEncoder.encode(exception.getMessage(), "UTF-8")
     );
     

@@ -176,7 +176,6 @@ class UserSignUpIntegrationTest {
         .role(UserRole.USER)
         .socialProvider(SocialProvider.LOCAL)
         .status(UserStatus.ACTIVE)
-        .isBanned(false)
         .build();
     userRepository.save(existingUser);
 
@@ -235,7 +234,6 @@ class UserSignUpIntegrationTest {
         .role(UserRole.USER)
         .socialProvider(SocialProvider.LOCAL)
         .status(UserStatus.ACTIVE)
-        .isBanned(false)
         .build();
     userRepository.save(existingUser);
 

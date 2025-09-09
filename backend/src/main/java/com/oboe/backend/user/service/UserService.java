@@ -16,6 +16,7 @@ import com.oboe.backend.user.dto.TokenRefreshDto;
 import com.oboe.backend.user.dto.TokenResponseDto;
 import com.oboe.backend.user.dto.UserProfileDto;
 import com.oboe.backend.user.dto.UserUpdateDto;
+import com.oboe.backend.user.dto.WithdrawDto;
 import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
@@ -26,6 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.DigestUtils;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +68,7 @@ public class UserService {
         .zipCode(dto.getZipCode())
         .birthDate(dto.getBirthDate())
         .gender(dto.getGender())
-        .isBanned(false)
+        .status(UserStatus.ACTIVE)
         .socialProvider(SocialProvider.LOCAL)
         .profileImg(dto.getProfileImg())
         .build();
@@ -74,29 +79,9 @@ public class UserService {
     String authKey = "sms_verified:" + dto.getPhoneNumber();
     redisComponent.delete(authKey);
 
-    log.info("회원가입 완료 - 이메일: {}, 닉네임: {}", dto.getEmail(), dto.getNickname());
+    log.info("회원가입 성공 - 사용자 ID: {}, 이메일: {}, 닉네임: {}, 가입일: {}", 
+        user.getId(), user.getEmail(), user.getNickname(), user.getCreatedAt());
     return ResponseDto.success(user);
-  }
-
-  // SMS 인증 상태 확인
-  private void validateSmsAuthentication(String phoneNumber) {
-    String authKey = "sms_verified:" + phoneNumber;
-    if (!redisComponent.hasKey(authKey)) {
-      throw new CustomException(ErrorCode.SMS_VERIFICATION_REQUIRED, "SMS 인증이 필요합니다.");
-    }
-  }
-
-  // ✅중복 필드 검증 (정규화된 휴대폰번호로 중복 체크)
-  private void validateUniqueFields(SignUpDto dto) {
-    if (userRepository.existsByEmail(dto.getEmail())) {
-      throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS, "이미 가입된 이메일입니다.");
-    }
-
-    // 휴대폰번호로 중복 체크
-    if (userRepository.existsByPhoneNumber(dto.getPhoneNumber())) {
-      log.warn("이미 가입된 휴대폰번호로 회원가입 시도 - 휴대폰번호: {}", dto.getPhoneNumber());
-      throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS, "이미 가입된 휴대폰번호입니다.");
-    }
   }
 
   // ✅사용자 조회 (이메일)
@@ -134,12 +119,7 @@ public class UserService {
     // 3. 사용자 상태 체크
     if (user.getStatus() != UserStatus.ACTIVE) {
       log.warn("로그인 실패 - 비활성 사용자: {}, 상태: {}", dto.getEmail(), user.getStatus());
-      throw new CustomException(ErrorCode.FORBIDDEN, "비활성화된 계정입니다.");
-    }
-
-    if (user.isBanned()) {
-      log.warn("로그인 실패 - 정지된 사용자: {}", dto.getEmail());
-      throw new CustomException(ErrorCode.FORBIDDEN, "정지된 계정입니다.");
+      throw new CustomException(ErrorCode.FORBIDDEN, "이용할수 없는 계정입니다.");
     }
 
     // 5. 비밀번호 검증
@@ -161,7 +141,8 @@ public class UserService {
     LoginResponseDto responseDto = LoginResponseDto.from(user, accessToken, refreshToken,
         expiresIn);
 
-    log.info("로그인 성공 - 사용자 ID: {}, 이메일: {}", user.getId(), user.getEmail());
+    log.info("로그인 성공 - 사용자 ID: {}, 이메일: {}, 닉네임: {}, 마지막 로그인: {}", 
+        user.getId(), user.getEmail(), user.getNickname(), user.getLastLoginAt());
     return ResponseDto.success(responseDto);
   }
 
@@ -190,9 +171,9 @@ public class UserService {
           .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
       // 사용자 상태 확인
-      if (user.getStatus() != UserStatus.ACTIVE || user.isBanned()) {
-        log.warn("토큰 갱신 실패 - 비활성 사용자: {}", email);
-        throw new CustomException(ErrorCode.FORBIDDEN, "비활성화된 계정입니다.");
+      if (user.getStatus() != UserStatus.ACTIVE) {
+        log.warn("토큰 갱신 실패 - 비활성 사용자: {}, 상태: {}", user.getEmail(), user.getStatus());
+        throw new CustomException(ErrorCode.FORBIDDEN, "이용할수 없는 계정입니다.");
       }
 
       // 새 토큰 생성
@@ -219,12 +200,16 @@ public class UserService {
   public ResponseDto<String> logout(String accessToken) {
     log.info("로그아웃 요청");
 
-    String token = jwtUtil.removeBearerPrefix(accessToken);
-    String email = jwtUtil.getEmailFromToken(token);
+    try {
+      String token = jwtUtil.removeBearerPrefix(accessToken);
+      String email = jwtUtil.getEmailFromToken(token);
 
-    log.info("로그아웃 성공 - 사용자: {}", email);
-    return ResponseDto.success("로그아웃되었습니다.");
-
+      log.info("로그아웃 성공 - 사용자: {}", email);
+      return ResponseDto.success("로그아웃되었습니다.");
+    } catch (Exception e) {
+      log.error("로그아웃 중 오류 발생", e);
+      throw new CustomException(ErrorCode.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+    }
   }
 
   // ✅현재 사용자 정보 조회
@@ -240,8 +225,14 @@ public class UserService {
       throw new CustomException(ErrorCode.UNAUTHORIZED, "만료된 토큰입니다.");
     }
 
-    // 토큰에서 이메일 추출
-    String email = jwtUtil.getEmailFromToken(token);
+    // 토큰에서 이메일 추출 (예외 처리 추가)
+    String email;
+    try {
+      email = jwtUtil.getEmailFromToken(token);
+    } catch (Exception e) {
+      log.error("토큰에서 이메일 추출 실패", e);
+      throw new CustomException(ErrorCode.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+    }
 
     // 사용자 정보 조회
     User user = userRepository.findByEmail(email)
@@ -252,13 +243,8 @@ public class UserService {
 
     // 사용자 상태 확인
     if (user.getStatus() != UserStatus.ACTIVE) {
-      log.warn("비활성 사용자 정보 조회 시도 - 이메일: {}, 상태: {}", email, user.getStatus());
-      throw new CustomException(ErrorCode.FORBIDDEN, "비활성화된 계정입니다.");
-    }
-
-    if (user.isBanned()) {
-      log.warn("차단된 사용자 정보 조회 시도 - 이메일: {}", email);
-      throw new CustomException(ErrorCode.FORBIDDEN, "정지된 계정입니다.");
+      log.warn("현재 사용자 정보 조회 실패 - 비활성 사용자: {}, 상태: {}", user.getEmail(), user.getStatus());
+      throw new CustomException(ErrorCode.FORBIDDEN, "이용할수 없는 계정입니다.");
     }
 
     // DTO 변환
@@ -294,13 +280,8 @@ public class UserService {
 
     // 사용자 상태 확인
     if (user.getStatus() != UserStatus.ACTIVE) {
-      log.warn("비활성 사용자 정보 수정 시도 - 이메일: {}, 상태: {}", email, user.getStatus());
-      throw new CustomException(ErrorCode.FORBIDDEN, "비활성화된 계정입니다.");
-    }
-
-    if (user.isBanned()) {
-      log.warn("차단된 사용자 정보 수정 시도 - 이메일: {}", email);
-      throw new CustomException(ErrorCode.FORBIDDEN, "정지된 계정입니다.");
+      log.warn("사용자 정보 수정 실패 - 비활성 사용자: {}, 상태: {}", user.getEmail(), user.getStatus());
+      throw new CustomException(ErrorCode.FORBIDDEN, "이용할수 없는 계정입니다.");
     }
 
     // 닉네임 중복 체크 (변경 시)
@@ -333,7 +314,8 @@ public class UserService {
     // DTO 변환
     UserProfileDto userProfile = UserProfileDto.from(user);
 
-    log.info("사용자 정보 수정 성공 - 사용자 ID: {}, 이메일: {}", user.getId(), email);
+    log.info("사용자 정보 수정 성공 - 사용자 ID: {}, 이메일: {}, 수정된 필드: {}", 
+        user.getId(), email, dto.toString());
     return ResponseDto.success(userProfile);
   }
 
@@ -362,13 +344,8 @@ public class UserService {
 
     // 사용자 상태 확인
     if (user.getStatus() != UserStatus.ACTIVE) {
-      log.warn("비활성 사용자 비밀번호 변경 시도 - 이메일: {}, 상태: {}", email, user.getStatus());
-      throw new CustomException(ErrorCode.FORBIDDEN, "비활성화된 계정입니다.");
-    }
-
-    if (user.isBanned()) {
-      log.warn("차단된 사용자 비밀번호 변경 시도 - 이메일: {}", email);
-      throw new CustomException(ErrorCode.FORBIDDEN, "정지된 계정입니다.");
+      log.warn("비밀번호 변경 실패 - 비활성 사용자: {}, 상태: {}", user.getEmail(), user.getStatus());
+      throw new CustomException(ErrorCode.FORBIDDEN, "이용할수 없는 계정입니다.");
     }
 
     // 소셜 로그인 사용자 체크
@@ -416,13 +393,8 @@ public class UserService {
 
     // 사용자 상태 확인
     if (user.getStatus() != UserStatus.ACTIVE) {
-      log.warn("비활성 사용자 프로필 이미지 업로드 시도 - 이메일: {}, 상태: {}", email, user.getStatus());
-      throw new CustomException(ErrorCode.FORBIDDEN, "비활성화된 계정입니다.");
-    }
-
-    if (user.isBanned()) {
-      log.warn("차단된 사용자 프로필 이미지 업로드 시도 - 이메일: {}", email);
-      throw new CustomException(ErrorCode.FORBIDDEN, "정지된 계정입니다.");
+      log.warn("프로필 업로드 실패 - 비활성 사용자: {}, 상태: {}", user.getEmail(), user.getStatus());
+      throw new CustomException(ErrorCode.FORBIDDEN, "이용할수 없는 계정입니다.");
     }
 
     // 기존 프로필 이미지 삭제
@@ -454,15 +426,16 @@ public class UserService {
 
     // 2. 일반 계정인지 확인
     if (user.getSocialProvider() != SocialProvider.LOCAL) {
-      log.warn("비밀번호 재설정 실패 - 소셜 로그인 사용자: {}, 제공자: {}", user.getEmail(), user.getSocialProvider());
+      log.warn("아이디 찾기 실패 - 소셜 로그인 사용자: {}, 제공자: {}", user.getEmail(), user.getSocialProvider());
       throw new CustomException(ErrorCode.FORBIDDEN, "소셜 로그인 사용자는 비밀번호를 재설정할 수 없습니다.");
     }
 
     // 3. 사용자 상태 확인
-    if (user.isBanned()) {
-      log.warn("아이디 찾기 실패 - 정지된 사용자: {}", user.getEmail());
-      throw new CustomException(ErrorCode.FORBIDDEN, "정지된 계정입니다.");
+    if (user.getStatus() != UserStatus.ACTIVE) {
+      log.warn("아이디찾기 실패 - 비활성 사용자: {}, 상태: {}", user.getEmail(), user.getStatus());
+      throw new CustomException(ErrorCode.FORBIDDEN, "이용할수 없는 계정입니다.");
     }
+
 
     // 4. 응답 DTO 생성
     FindIdResponseDto responseDto = FindIdResponseDto.from(user.getEmail());
@@ -493,12 +466,7 @@ public class UserService {
     // 3. 사용자 상태 확인
     if (user.getStatus() != UserStatus.ACTIVE) {
       log.warn("비밀번호 재설정 실패 - 비활성 사용자: {}, 상태: {}", email, user.getStatus());
-      throw new CustomException(ErrorCode.FORBIDDEN, "비활성화된 계정입니다.");
-    }
-
-    if (user.isBanned()) {
-      log.warn("비밀번호 재설정 실패 - 정지된 사용자: {}", email);
-      throw new CustomException(ErrorCode.FORBIDDEN, "정지된 계정입니다.");
+      throw new CustomException(ErrorCode.FORBIDDEN, "이용할수 없는 계정입니다.");
     }
 
     // 4. 새 비밀번호로 업데이트
@@ -507,6 +475,128 @@ public class UserService {
 
     log.info("비밀번호 재설정 성공 - 사용자 ID: {}, 이메일: {}", user.getId(), email);
     return ResponseDto.success("비밀번호가 성공적으로 재설정되었습니다.");
+  }
+
+  // ✅회원탈퇴 (1단계: 탈퇴 처리 - 최소 개인정보만 유지)
+  @Transactional
+  public ResponseDto<String> withdrawUser(String accessToken, WithdrawDto dto) {
+    log.info("회원탈퇴 요청");
+
+    String token = jwtUtil.removeBearerPrefix(accessToken);
+
+    // 토큰 유효성 검증
+    if (jwtUtil.isTokenExpired(token)) {
+      log.warn("만료된 토큰으로 회원탈퇴 시도");
+      throw new CustomException(ErrorCode.UNAUTHORIZED, "만료된 토큰입니다.");
+    }
+
+    // 토큰에서 이메일 추출 (예외 처리 추가)
+    String email;
+    try {
+      email = jwtUtil.getEmailFromToken(token);
+    } catch (Exception e) {
+      log.error("토큰에서 이메일 추출 실패", e);
+      throw new CustomException(ErrorCode.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+    }
+
+    // 사용자 정보 조회
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> {
+          log.warn("회원탈퇴 실패 - 존재하지 않는 이메일: {}", email);
+          return new CustomException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다.");
+        });
+
+    // 사용자 상태 확인
+    if (user.getStatus() != UserStatus.ACTIVE) {
+      log.warn("회원탈퇴 실패 - 비활성 사용자: {}, 상태: {}", user.getEmail(), user.getStatus());
+      throw new CustomException(ErrorCode.FORBIDDEN, "이용할수 없는 계정입니다.");
+    }
+
+    // 소셜 로그인 사용자 체크
+    if (user.getSocialProvider() != SocialProvider.LOCAL) {
+      log.warn("소셜 로그인 사용자 회원탈퇴 시도 - 이메일: {}, 제공자: {}", email, user.getSocialProvider());
+      throw new CustomException(ErrorCode.FORBIDDEN, "소셜 로그인 사용자는 회원탈퇴를 할 수 없습니다.");
+    }
+
+    // 비밀번호 검증
+    if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+      log.warn("회원탈퇴 실패 - 비밀번호 불일치: {}", email);
+      throw new CustomException(ErrorCode.INVALID_PASSWORD, "비밀번호가 올바르지 않습니다.");
+    }
+
+    // 1단계: 탈퇴시 유저 상태 변경 처리
+    LocalDateTime now = LocalDateTime.now();
+    user.setStatus(UserStatus.WITHDRAW);
+    user.setDeletedAt(now);
+
+    // 회원탈퇴 후 저장 기한 설정 (탈퇴 시점으로부터 30일 후)
+    user.setPiiClearedAt(now.plusDays(30));
+
+    // 이메일 익명화
+    String anonymizedEmail = anonymizeEmail(email, now);
+    user.setEmail(anonymizedEmail);
+
+    userRepository.save(user);
+
+    log.info("회원탈퇴 성공 - 사용자 ID: {}, 원본 이메일: {}, 익명화된 이메일: {}, 탈퇴사유: {}",
+        user.getId(), email, anonymizedEmail, dto.getReason());
+
+    return ResponseDto.success("회원탈퇴가 완료되었습니다. 30일 후 개인정보가 완전히 삭제됩니다.");
+  }
+
+  // ✅완전 삭제 (30일 후 개인정보 완전 삭제)
+  @Transactional
+  public void permanentlyDeleteUsers() {
+    log.info("완전 삭제 작업 시작");
+
+    LocalDateTime now = LocalDateTime.now();
+
+    // 정리 예정일이 현재 시간보다 이전인 사용자들 조회 (30일이 지난 사용자들)
+    var usersToDelete = userRepository.findByStatusAndPiiClearedAtBeforeAndPiiClearedAtIsNotNull(
+        UserStatus.WITHDRAW, now);
+
+    int deletedCount = 0;
+    for (User user : usersToDelete) {
+      try {
+        // 실제 DB에서 완전히 삭제
+        userRepository.delete(user);
+        deletedCount++;
+
+        log.info("완전 삭제 완료 - 사용자 ID: {}", user.getId());
+      } catch (Exception e) {
+        log.error("완전 삭제 중 오류 발생 - 사용자 ID: {}", user.getId(), e);
+      }
+    }
+
+    log.info("완전 삭제 작업 완료 - 처리된 사용자 수: {}", deletedCount);
+  }
+
+  // ✅SMS 인증 상태 확인
+  private void validateSmsAuthentication(String phoneNumber) {
+    String authKey = "sms_verified:" + phoneNumber;
+    if (!redisComponent.hasKey(authKey)) {
+      throw new CustomException(ErrorCode.SMS_VERIFICATION_REQUIRED, "SMS 인증이 필요합니다.");
+    }
+  }
+
+  // ✅중복 필드 검증 (정규화된 휴대폰번호로 중복 체크)
+  private void validateUniqueFields(SignUpDto dto) {
+    if (userRepository.existsByEmail(dto.getEmail())) {
+      throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS, "이미 가입된 이메일입니다.");
+    }
+
+    // 휴대폰번호로 중복 체크
+    if (userRepository.existsByPhoneNumber(dto.getPhoneNumber())) {
+      log.warn("이미 가입된 휴대폰번호로 회원가입 시도 - 휴대폰번호: {}", dto.getPhoneNumber());
+      throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS, "이미 가입된 휴대폰번호입니다.");
+    }
+  }
+
+  // ✅이메일 익명화 메서드
+  private String anonymizeEmail(String originalEmail, LocalDateTime deletedAt) {
+    String timestamp = deletedAt.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+    String hash = DigestUtils.md5DigestAsHex(originalEmail.getBytes()).substring(0, 8);
+    return "deleted_" + timestamp + "_" + hash + "@deleted.local";
   }
 
 }

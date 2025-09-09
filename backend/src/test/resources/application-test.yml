@@ -1,15 +1,12 @@
 spring:
-  application:
-    name: backend-test
-  
-  # 테스트용 H2 인메모리 데이터베이스 설정
+  # 테스트 환경 데이터베이스 설정
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
     password: 
     driver-class-name: org.h2.Driver
   
-  # JPA 설정
+  # JPA 설정 (테스트용)
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -25,35 +22,49 @@ spring:
     console:
       enabled: true
 
-  # 테스트용 Redis 설정 (Embedded Redis 사용)
+  # Redis 설정 (테스트용 - 실제 Redis 대신 Mock 사용)
   data:
     redis:
       host: localhost
-      port: 6370
-      password: 
+      port: 6379
       username: 
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
+      password: 
 
-# 테스트용 SMS 설정
-coolsms:
-  apikey: test_api_key_1234
-  apisecret: test_api_secret_1234
-  fromnumber: 01012345678
-
-# JWT 설정
-jwt:
-  secret: test-secret-key-for-jwt-testing-only-must-be-at-least-32-characters-long
-  access-token-expiration: 3600000
-  refresh-token-expiration: 604800000
-
-# 로깅 설정
+# 로깅 설정 (테스트용)
 logging:
   level:
+    com.oboe.backend: DEBUG
     org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.test: DEBUG
+    org.springframework.security: DEBUG
+
+# SMS 설정 (테스트용)
+coolsms:
+  apikey: test_api_key
+  apisecret: test_api_secret
+  fromnumber: 01012345678
+
+# JWT 설정 (테스트용)
+jwt:
+  secret: test_jwt_secret_key_for_testing_purposes_only_32_chars
+  access-token-expiration: 86400000
+  refresh-token-expiration: 604800000
+
+# MySQL 설정 (테스트용 - H2 사용)
+mysql_id: sa
+mysql_password: 
+redis_host: localhost
+redis_port: 6379
+redis_password: 
+
+# OAuth2 설정 (테스트용)
+oauth2:
+  kakao:
+    client-id: test_kakao_client_id
+    client-secret: test_kakao_client_secret
+    redirect-uri: http://localhost:3000/oauth2/callback/kakao
+    scope: profile_nickname,account_email
+  naver:
+    client-id: test_naver_client_id
+    client-secret: test_naver_client_secret
+    redirect-uri: http://localhost:3000/oauth2/callback/naver
+    scope: name,email 

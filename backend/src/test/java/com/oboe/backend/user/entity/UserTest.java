@@ -32,7 +32,6 @@ class UserTest {
         .gender("M")
         .socialProvider(SocialProvider.LOCAL)
         .lastLoginAt(LocalDateTime.now())
-        .isBanned(false)
         .profileImg("profile.jpg")
         .build();
   }
@@ -58,7 +57,6 @@ class UserTest {
     assertThat(newUser.getNickname()).isEqualTo("kim123");
     assertThat(newUser.getRole()).isEqualTo(UserRole.USER);
     assertThat(newUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
-    assertThat(newUser.isBanned()).isFalse();
   }
 
   @Test
@@ -84,7 +82,6 @@ class UserTest {
         .gender("F")
         .socialProvider(SocialProvider.KAKAO)
         .lastLoginAt(now)
-        .isBanned(false)
         .profileImg("factory_profile.jpg")
         .build();
 
@@ -101,7 +98,6 @@ class UserTest {
     assertThat(createdUser.getGender()).isEqualTo("F");
     assertThat(createdUser.getSocialProvider()).isEqualTo(SocialProvider.KAKAO);
     assertThat(createdUser.getLastLoginAt()).isEqualTo(now);
-    assertThat(createdUser.isBanned()).isFalse();
     assertThat(createdUser.getProfileImg()).isEqualTo("factory_profile.jpg");
   }
 
@@ -121,7 +117,6 @@ class UserTest {
     user.setNickname(newNickname);
     user.setAddress(newRoadAddress, newDetailAddress, newZipCode);
     user.setStatus(newStatus);
-    user.setBanned(true);
 
     // then
     assertThat(user.getName()).isEqualTo(newName);
@@ -130,7 +125,6 @@ class UserTest {
     assertThat(user.getRoadAddress()).isEqualTo(newDetailAddress);
     assertThat(user.getZipCode()).isEqualTo(newZipCode);
     assertThat(user.getStatus()).isEqualTo(newStatus);
-    assertThat(user.isBanned()).isTrue();
   }
 
   @Test
@@ -148,7 +142,7 @@ class UserTest {
     // given & when & then
     assertThat(UserStatus.ACTIVE).isNotNull();
     assertThat(UserStatus.SUSPENDED).isNotNull();
-    assertThat(UserStatus.DELETED).isNotNull();
+    assertThat(UserStatus.WITHDRAW).isNotNull();
     assertThat(UserStatus.values()).hasSize(3);
   }
 
@@ -164,11 +158,11 @@ class UserTest {
     // then
     assertThat(user.getStatus()).isEqualTo(UserStatus.SUSPENDED);
 
-    // when - 삭제 상태로 변경
-    user.setStatus(UserStatus.DELETED);
+    // when - 탈퇴 상태로 변경
+    user.setStatus(UserStatus.WITHDRAW);
 
     // then
-    assertThat(user.getStatus()).isEqualTo(UserStatus.DELETED);
+    assertThat(user.getStatus()).isEqualTo(UserStatus.WITHDRAW);
   }
 
   @Test
@@ -200,25 +194,6 @@ class UserTest {
   }
 
   @Test
-  @DisplayName("User 밴 상태 테스트")
-  void testUserBanStatus() {
-    // given
-    assertThat(user.isBanned()).isFalse();
-
-    // when
-    user.setBanned(true);
-
-    // then
-    assertThat(user.isBanned()).isTrue();
-
-    // when - 밴 해제
-    user.setBanned(false);
-
-    // then
-    assertThat(user.isBanned()).isFalse();
-  }
-
-  @Test
   @DisplayName("OAuth2 사용자 생성 테스트")
   void createOAuth2User() {
     // given & when
@@ -232,7 +207,6 @@ class UserTest {
         .status(UserStatus.ACTIVE)
         .profileImg("https://example.com/profile.jpg")
         .lastLoginAt(LocalDateTime.now())
-        .isBanned(false)
         .build();
 
     // then
@@ -295,7 +269,6 @@ class UserTest {
         .status(UserStatus.ACTIVE)
         .profileImg("https://example.com/naver-profile.jpg")
         .lastLoginAt(LocalDateTime.now())
-        .isBanned(false)
         .build();
 
     // then

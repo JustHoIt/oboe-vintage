@@ -60,7 +60,6 @@ class UserIntegrationTest {
         .gender("M")
         .socialProvider(SocialProvider.LOCAL)
         .lastLoginAt(LocalDateTime.now())
-        .isBanned(false)
         .profileImg("profile.jpg")
         .build();
 
@@ -335,7 +334,6 @@ class UserIntegrationTest {
         .gender("M")
         .socialProvider(SocialProvider.LOCAL)
         .lastLoginAt(LocalDateTime.now())
-        .isBanned(false)
         .profileImg("test.jpg")
         .build();
   }

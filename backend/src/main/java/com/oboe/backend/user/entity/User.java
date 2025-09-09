@@ -75,10 +75,11 @@ public class User extends BaseTimeEntity {
 
   private LocalDateTime lastLoginAt;
 
-  @Column(nullable = false)
-  private boolean isBanned;
-
   private String profileImg;
+
+  private LocalDateTime deletedAt;
+
+  private LocalDateTime piiClearedAt;
 
   // 테스트를 위한 setter 메서드들 (password 제외)
   public void setName(String name) {
@@ -103,6 +104,18 @@ public class User extends BaseTimeEntity {
     this.zipCode = zipCode;
   }
 
+  public void setRoadAddress(String roadAddress) {
+    this.roadAddress = roadAddress;
+  }
+
+  public void setDetailAddress(String detailAddress) {
+    this.detailAddress = detailAddress;
+  }
+
+  public void setZipCode(String zipCode) {
+    this.zipCode = zipCode;
+  }
+
   public void setStatus(UserStatus status) {
     this.status = status;
   }
@@ -115,9 +128,6 @@ public class User extends BaseTimeEntity {
     this.lastLoginAt = lastLoginAt;
   }
 
-  public void setBanned(boolean isBanned) {
-    this.isBanned = isBanned;
-  }
 
   public void setSocialProvider(SocialProvider socialProvider) {
     this.socialProvider = socialProvider;
@@ -137,6 +147,14 @@ public class User extends BaseTimeEntity {
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  public void setDeletedAt(LocalDateTime deletedAt) {
+    this.deletedAt = deletedAt;
+  }
+
+  public void setPiiClearedAt(LocalDateTime piiClearedAt) {
+    this.piiClearedAt = piiClearedAt;
   }
 
   // 비즈니스 로직을 위한 메서드들
