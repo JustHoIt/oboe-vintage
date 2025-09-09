@@ -39,7 +39,6 @@ class JwtUtilTest {
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
         .socialProvider(SocialProvider.LOCAL)
-        .isBanned(false)
         .lastLoginAt(LocalDateTime.now())
         .build();
   }

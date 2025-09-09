@@ -74,7 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
    * 사용자 유효성 검증
    */
   private boolean isUserValid(User user) {
-    return user.getStatus().name().equals("ACTIVE") && !user.isBanned();
+    return user.getStatus().name().equals("ACTIVE");
   }
 
   /**

@@ -155,7 +155,6 @@ class MessageServiceTest {
                 .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
                 .socialProvider(SocialProvider.LOCAL)
-                .isBanned(false)
                 .build();
 
         FindPasswordDto dto = FindPasswordDto.builder()
@@ -205,7 +204,6 @@ class MessageServiceTest {
                 .role(UserRole.USER)
                 .status(UserStatus.SUSPENDED)
                 .socialProvider(SocialProvider.LOCAL)
-                .isBanned(false)
                 .build();
 
         FindPasswordDto dto = FindPasswordDto.builder()
@@ -224,10 +222,10 @@ class MessageServiceTest {
     }
 
     @Test
-    @DisplayName("비밀번호 찾기 인증번호 발송 실패 - 차단된 사용자")
-    void sendPasswordResetMessage_Fail_BannedUser() {
+    @DisplayName("비밀번호 찾기 인증번호 발송 실패 - OAuth2 사용자")
+    void sendPasswordResetMessage_Fail_OAuth2User() {
         // given
-        User bannedUser = User.builder()
+        User oauth2User = User.builder()
                 .id(1L)
                 .email("test@example.com")
                 .name("테스트사용자")
@@ -235,8 +233,7 @@ class MessageServiceTest {
                 .phoneNumber("01012345678")
                 .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
-                .socialProvider(SocialProvider.LOCAL)
-                .isBanned(true)
+                .socialProvider(SocialProvider.KAKAO)
                 .build();
 
         FindPasswordDto dto = FindPasswordDto.builder()
@@ -245,13 +242,13 @@ class MessageServiceTest {
                 .build();
 
         when(userRepository.findByEmailAndPhoneNumberAndSocialProvider("test@example.com", "01012345678"))
-                .thenReturn(Optional.of(bannedUser));
+                .thenReturn(Optional.of(oauth2User));
+        when(redisComponent.hasKey("sms_rate_limit:01012345678")).thenReturn(false);
 
-        // when & then
+        // when & then - OAuth2 사용자도 SMS 발송은 성공하지만, 실제 비밀번호 재설정에서 막힘
         assertThatThrownBy(() -> messageService.sendPasswordResetMessage(dto))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN)
-                .hasMessage("정지된 계정입니다.");
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SMS_SEND_FAILED);
     }
 
     // ========== 인증번호 검증 테스트 ==========

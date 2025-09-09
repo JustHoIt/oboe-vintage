@@ -51,7 +51,6 @@ class UserRepositoryTest {
         .gender("M")
         .socialProvider(SocialProvider.LOCAL)
         .lastLoginAt(LocalDateTime.now().minusDays(1))
-        .isBanned(false)
         .profileImg("profile1.jpg")
         .build();
 
@@ -70,7 +69,6 @@ class UserRepositoryTest {
         .gender("F")
         .socialProvider(SocialProvider.LOCAL)
         .lastLoginAt(LocalDateTime.now().minusHours(2))
-        .isBanned(false)
         .profileImg("profile2.jpg")
         .build();
 
@@ -89,7 +87,6 @@ class UserRepositoryTest {
         .gender("F")
         .socialProvider(SocialProvider.KAKAO)
         .lastLoginAt(LocalDateTime.now().minusDays(3))
-        .isBanned(true)
         .profileImg("profile3.jpg")
         .build();
 
@@ -193,14 +190,14 @@ class UserRepositoryTest {
   }
 
   @Test
-  @DisplayName("밴된 사용자 목록 조회 테스트")
+  @DisplayName("정지된 사용자 목록 조회 테스트")
   void findByIsBannedTrue() {
     // when
-    List<User> bannedUsers = userRepository.findByIsBannedTrue();
+    List<User> suspendedUsers = userRepository.findByStatus(UserStatus.SUSPENDED);
 
     // then
-    assertThat(bannedUsers).hasSize(1);
-    assertThat(bannedUsers.get(0).getName()).isEqualTo("이영희");
+    assertThat(suspendedUsers).hasSize(1);
+    assertThat(suspendedUsers.get(0).getName()).isEqualTo("이영희");
   }
 
   @Test

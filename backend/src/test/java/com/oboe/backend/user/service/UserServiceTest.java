@@ -19,6 +19,7 @@ import com.oboe.backend.user.dto.TokenRefreshDto;
 import com.oboe.backend.user.dto.TokenResponseDto;
 import com.oboe.backend.user.dto.UserProfileDto;
 import com.oboe.backend.user.dto.UserUpdateDto;
+import com.oboe.backend.user.dto.WithdrawDto;
 import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
@@ -89,7 +90,6 @@ class UserServiceTest {
         .birthDate(LocalDate.of(1990, 1, 1))
         .gender("남")
         .socialProvider(SocialProvider.LOCAL)
-        .isBanned(false)
         .profileImg("https://example.com/profile.jpg")
         .build();
   }
@@ -283,7 +283,6 @@ class UserServiceTest {
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
         .socialProvider(SocialProvider.LOCAL)
-        .isBanned(false)
         .lastLoginAt(LocalDateTime.now().minusDays(1))
         .build();
 
@@ -357,7 +356,6 @@ class UserServiceTest {
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
         .socialProvider(SocialProvider.LOCAL)
-        .isBanned(false)
         .build();
 
     LoginDto wrongPasswordDto = LoginDto.builder()
@@ -390,7 +388,6 @@ class UserServiceTest {
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
         .socialProvider(SocialProvider.KAKAO)
-        .isBanned(false)
         .build();
 
     LoginDto socialLoginDto = LoginDto.builder()
@@ -421,7 +418,6 @@ class UserServiceTest {
         .role(UserRole.USER)
         .status(UserStatus.SUSPENDED)
         .socialProvider(SocialProvider.LOCAL)
-        .isBanned(false)
         .build();
 
     LoginDto inactiveLoginDto = LoginDto.builder()
@@ -439,32 +435,31 @@ class UserServiceTest {
   }
 
   @Test
-  @DisplayName("차단된 사용자 로그인 실패")
-  void loginFailWithBannedUser() {
+  @DisplayName("정지된 사용자 로그인 실패")
+  void loginFailWithSuspendedUser() {
     // given
-    User bannedUser = User.builder()
+    User suspendedUser = User.builder()
         .id(4L)
-        .email("banned@example.com")
+        .email("suspended@example.com")
         .password("encodedPassword")
-        .name("차단사용자")
-        .nickname("banneduser")
+        .name("정지사용자")
+        .nickname("suspendeduser")
         .phoneNumber("01022222222")
         .role(UserRole.USER)
-        .status(UserStatus.ACTIVE)
+        .status(UserStatus.SUSPENDED)
         .socialProvider(SocialProvider.LOCAL)
-        .isBanned(true)
         .build();
 
-    LoginDto bannedLoginDto = LoginDto.builder()
-        .email("banned@example.com")
+    LoginDto suspendedLoginDto = LoginDto.builder()
+        .email("suspended@example.com")
         .password("password123!")
         .build();
 
-    when(userRepository.findByEmail("banned@example.com"))
-        .thenReturn(Optional.of(bannedUser));
+    when(userRepository.findByEmail("suspended@example.com"))
+        .thenReturn(Optional.of(suspendedUser));
 
     // when & then
-    assertThatThrownBy(() -> userService.login(bannedLoginDto))
+    assertThatThrownBy(() -> userService.login(suspendedLoginDto))
         .isInstanceOf(CustomException.class)
         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
   }
@@ -483,7 +478,6 @@ class UserServiceTest {
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
         .socialProvider(SocialProvider.LOCAL)
-        .isBanned(false)
         .lastLoginAt(LocalDateTime.now().minusDays(1))
         .build();
 
@@ -531,7 +525,6 @@ class UserServiceTest {
         .nickname("testuser")
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
-        .isBanned(false)
         .build();
 
     String oldRefreshToken = "Bearer old.refresh.token";
@@ -620,7 +613,6 @@ class UserServiceTest {
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
         .socialProvider(SocialProvider.LOCAL)
-        .isBanned(false)
         .roadAddress("서울시 강남구")
         .detailAddress("1층")
         .zipCode("02111")
@@ -704,7 +696,6 @@ class UserServiceTest {
         .role(UserRole.USER)
         .status(UserStatus.SUSPENDED)
         .socialProvider(SocialProvider.LOCAL)
-        .isBanned(false)
         .build();
 
     String validToken = "Bearer valid.token";
@@ -720,31 +711,337 @@ class UserServiceTest {
         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
   }
 
+  // ========== 사용자 정보 수정 테스트 ==========
+
   @Test
-  @DisplayName("현재 사용자 정보 조회 실패 - 차단된 사용자")
-  void getCurrentUserFailBannedUser() {
+  @DisplayName("사용자 정보 수정 성공")
+  void updateUserSuccess() {
     // given
-    User bannedUser = User.builder()
-        .id(3L)
-        .email("banned@example.com")
-        .name("차단사용자")
-        .nickname("banneduser")
+    User user = User.builder()
+        .id(1L)
+        .email("test@example.com")
+        .name("테스트사용자")
+        .nickname("testuser")
+        .phoneNumber("01012345678")
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
         .socialProvider(SocialProvider.LOCAL)
-        .isBanned(true)
+        .roadAddress("서울시 강남구")
+        .detailAddress("1층")
+        .zipCode("02111")
         .build();
 
+    String accessToken = "Bearer valid.access.token";
+    UserUpdateDto updateDto = UserUpdateDto.builder()
+        .nickname("새닉네임")
+        .roadAddress("서울시 서초구")
+        .detailAddress("2층")
+        .zipCode("02112")
+        .build();
+
+    when(jwtUtil.removeBearerPrefix(accessToken)).thenReturn("valid.access.token");
+    when(jwtUtil.isTokenExpired("valid.access.token")).thenReturn(false);
+    when(jwtUtil.getEmailFromToken("valid.access.token")).thenReturn("test@example.com");
+    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+    when(userRepository.existsByNickname("새닉네임")).thenReturn(false);
+    when(userRepository.save(any(User.class))).thenReturn(user);
+
+    // when
+    ResponseDto<UserProfileDto> result = userService.updateUser(accessToken, updateDto);
+
+    // then
+    assertThat(result.isSuccess()).isTrue();
+    assertThat(result.getData()).isNotNull();
+    verify(userRepository).save(any(User.class));
+  }
+
+  @Test
+  @DisplayName("사용자 정보 수정 실패 - 닉네임 중복")
+  void updateUserFailNicknameExists() {
+    // given
+    User user = User.builder()
+        .id(1L)
+        .email("test@example.com")
+        .name("테스트사용자")
+        .nickname("testuser")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
+
+    String accessToken = "Bearer valid.access.token";
+    UserUpdateDto updateDto = UserUpdateDto.builder()
+        .nickname("중복닉네임")
+        .build();
+
+    when(jwtUtil.removeBearerPrefix(accessToken)).thenReturn("valid.access.token");
+    when(jwtUtil.isTokenExpired("valid.access.token")).thenReturn(false);
+    when(jwtUtil.getEmailFromToken("valid.access.token")).thenReturn("test@example.com");
+    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+    when(userRepository.existsByNickname("중복닉네임")).thenReturn(true);
+
+    // when & then
+    assertThatThrownBy(() -> userService.updateUser(accessToken, updateDto))
+        .isInstanceOf(CustomException.class)
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NICKNAME_ALREADY_EXISTS);
+  }
+
+  // ========== 비밀번호 변경 테스트 ==========
+
+  @Test
+  @DisplayName("비밀번호 변경 성공")
+  void changePasswordSuccess() {
+    // given
+    User user = User.builder()
+        .id(1L)
+        .email("test@example.com")
+        .password("encodedPassword")
+        .name("테스트사용자")
+        .nickname("testuser")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
+
+    String accessToken = "Bearer valid.access.token";
+    PasswordChangeDto changeDto = PasswordChangeDto.builder()
+        .currentPassword("password123!")
+        .newPassword("newPassword123!")
+        .build();
+
+    when(jwtUtil.removeBearerPrefix(accessToken)).thenReturn("valid.access.token");
+    when(jwtUtil.isTokenExpired("valid.access.token")).thenReturn(false);
+    when(jwtUtil.getEmailFromToken("valid.access.token")).thenReturn("test@example.com");
+    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+    when(passwordEncoder.matches("password123!", "encodedPassword")).thenReturn(true);
+    when(passwordEncoder.encode("newPassword123!")).thenReturn("newEncodedPassword");
+    when(userRepository.save(any(User.class))).thenReturn(user);
+
+    // when
+    ResponseDto<String> result = userService.changePassword(accessToken, changeDto);
+
+    // then
+    assertThat(result.isSuccess()).isTrue();
+    assertThat(result.getData()).isEqualTo("비밀번호가 성공적으로 변경되었습니다.");
+    verify(userRepository).save(any(User.class));
+  }
+
+  @Test
+  @DisplayName("비밀번호 변경 실패 - 잘못된 현재 비밀번호")
+  void changePasswordFailWrongCurrentPassword() {
+    // given
+    User user = User.builder()
+        .id(1L)
+        .email("test@example.com")
+        .password("encodedPassword")
+        .name("테스트사용자")
+        .nickname("testuser")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
+
+    String accessToken = "Bearer valid.access.token";
+    PasswordChangeDto changeDto = PasswordChangeDto.builder()
+        .currentPassword("wrongPassword")
+        .newPassword("newPassword123!")
+        .build();
+
+    when(jwtUtil.removeBearerPrefix(accessToken)).thenReturn("valid.access.token");
+    when(jwtUtil.isTokenExpired("valid.access.token")).thenReturn(false);
+    when(jwtUtil.getEmailFromToken("valid.access.token")).thenReturn("test@example.com");
+    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+    when(passwordEncoder.matches("wrongPassword", "encodedPassword")).thenReturn(false);
+
+    // when & then
+    assertThatThrownBy(() -> userService.changePassword(accessToken, changeDto))
+        .isInstanceOf(CustomException.class)
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PASSWORD);
+  }
+
+  // ========== 회원탈퇴 테스트 ==========
+
+  @Test
+  @DisplayName("회원탈퇴 성공")
+  void withdrawUserSuccess() {
+    // given
+    User activeUser = User.builder()
+        .id(1L)
+        .email("test@example.com")
+        .password("encodedPassword")
+        .name("테스트사용자")
+        .nickname("testuser")
+        .phoneNumber("01012345678")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
+
+    String accessToken = "Bearer valid.access.token";
+    WithdrawDto withdrawDto = WithdrawDto.builder()
+        .password("password123!")
+        .reason("서비스 불만족")
+        .build();
+
+    when(jwtUtil.removeBearerPrefix(accessToken)).thenReturn("valid.access.token");
+    when(jwtUtil.isTokenExpired("valid.access.token")).thenReturn(false);
+    when(jwtUtil.getEmailFromToken("valid.access.token")).thenReturn("test@example.com");
+    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(activeUser));
+    when(passwordEncoder.matches("password123!", "encodedPassword")).thenReturn(true);
+    when(userRepository.save(any(User.class))).thenReturn(activeUser);
+
+    // when
+    ResponseDto<String> result = userService.withdrawUser(accessToken, withdrawDto);
+
+    // then
+    assertThat(result.isSuccess()).isTrue();
+    assertThat(result.getData()).isEqualTo("회원탈퇴가 완료되었습니다. 30일 후 개인정보가 완전히 삭제됩니다.");
+
+    verify(userRepository).save(argThat(user -> 
+        user.getStatus() == UserStatus.WITHDRAW &&
+        user.getDeletedAt() != null &&
+        user.getEmail().startsWith("deleted_")
+    ));
+  }
+
+  @Test
+  @DisplayName("회원탈퇴 실패 - 만료된 토큰")
+  void withdrawUserFailExpiredToken() {
+    // given
+    String expiredToken = "Bearer expired.token";
+    WithdrawDto withdrawDto = WithdrawDto.builder()
+        .password("password123!")
+        .reason("서비스 불만족")
+        .build();
+
+    when(jwtUtil.removeBearerPrefix(expiredToken)).thenReturn("expired.token");
+    when(jwtUtil.isTokenExpired("expired.token")).thenReturn(true);
+
+    // when & then
+    assertThatThrownBy(() -> userService.withdrawUser(expiredToken, withdrawDto))
+        .isInstanceOf(CustomException.class)
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.UNAUTHORIZED);
+  }
+
+  @Test
+  @DisplayName("회원탈퇴 실패 - 사용자 없음")
+  void withdrawUserFailUserNotFound() {
+    // given
     String validToken = "Bearer valid.token";
+    WithdrawDto withdrawDto = WithdrawDto.builder()
+        .password("password123!")
+        .reason("서비스 불만족")
+        .build();
 
     when(jwtUtil.removeBearerPrefix(validToken)).thenReturn("valid.token");
     when(jwtUtil.isTokenExpired("valid.token")).thenReturn(false);
-    when(jwtUtil.getEmailFromToken("valid.token")).thenReturn("banned@example.com");
-    when(userRepository.findByEmail("banned@example.com")).thenReturn(Optional.of(bannedUser));
+    when(jwtUtil.getEmailFromToken("valid.token")).thenReturn("notfound@example.com");
+    when(userRepository.findByEmail("notfound@example.com")).thenReturn(Optional.empty());
 
     // when & then
-    assertThatThrownBy(() -> userService.getCurrentUser(validToken))
+    assertThatThrownBy(() -> userService.withdrawUser(validToken, withdrawDto))
+        .isInstanceOf(CustomException.class)
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+  }
+
+  @Test
+  @DisplayName("회원탈퇴 실패 - 이미 탈퇴된 사용자")
+  void withdrawUserFailAlreadyWithdrawn() {
+    // given
+    User withdrawnUser = User.builder()
+        .id(1L)
+        .email("test@example.com")
+        .password("encodedPassword")
+        .name("테스트사용자")
+        .nickname("testuser")
+        .phoneNumber("01012345678")
+        .role(UserRole.USER)
+        .status(UserStatus.WITHDRAW)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
+
+    String accessToken = "Bearer valid.token";
+    WithdrawDto withdrawDto = WithdrawDto.builder()
+        .password("password123!")
+        .reason("서비스 불만족")
+        .build();
+
+    when(jwtUtil.removeBearerPrefix(accessToken)).thenReturn("valid.token");
+    when(jwtUtil.isTokenExpired("valid.token")).thenReturn(false);
+    when(jwtUtil.getEmailFromToken("valid.token")).thenReturn("test@example.com");
+    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(withdrawnUser));
+
+    // when & then
+    assertThatThrownBy(() -> userService.withdrawUser(accessToken, withdrawDto))
         .isInstanceOf(CustomException.class)
         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
   }
+
+  @Test
+  @DisplayName("회원탈퇴 실패 - 소셜 로그인 사용자")
+  void withdrawUserFailSocialUser() {
+    // given
+    User socialUser = User.builder()
+        .id(1L)
+        .email("social@example.com")
+        .password("encodedPassword")
+        .name("소셜사용자")
+        .nickname("socialuser")
+        .phoneNumber("01012345678")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.KAKAO)
+        .build();
+
+    String accessToken = "Bearer valid.token";
+    WithdrawDto withdrawDto = WithdrawDto.builder()
+        .password("password123!")
+        .reason("서비스 불만족")
+        .build();
+
+    when(jwtUtil.removeBearerPrefix(accessToken)).thenReturn("valid.token");
+    when(jwtUtil.isTokenExpired("valid.token")).thenReturn(false);
+    when(jwtUtil.getEmailFromToken("valid.token")).thenReturn("social@example.com");
+    when(userRepository.findByEmail("social@example.com")).thenReturn(Optional.of(socialUser));
+
+    // when & then
+    assertThatThrownBy(() -> userService.withdrawUser(accessToken, withdrawDto))
+        .isInstanceOf(CustomException.class)
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+  }
+
+  @Test
+  @DisplayName("회원탈퇴 실패 - 잘못된 비밀번호")
+  void withdrawUserFailWrongPassword() {
+    // given
+    User activeUser = User.builder()
+        .id(1L)
+        .email("test@example.com")
+        .password("encodedPassword")
+        .name("테스트사용자")
+        .nickname("testuser")
+        .phoneNumber("01012345678")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
+
+    String accessToken = "Bearer valid.token";
+    WithdrawDto withdrawDto = WithdrawDto.builder()
+        .password("wrongPassword")
+        .reason("서비스 불만족")
+        .build();
+
+    when(jwtUtil.removeBearerPrefix(accessToken)).thenReturn("valid.token");
+    when(jwtUtil.isTokenExpired("valid.token")).thenReturn(false);
+    when(jwtUtil.getEmailFromToken("valid.token")).thenReturn("test@example.com");
+    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(activeUser));
+    when(passwordEncoder.matches("wrongPassword", "encodedPassword")).thenReturn(false);
+
+    // when & then
+    assertThatThrownBy(() -> userService.withdrawUser(accessToken, withdrawDto))
+        .isInstanceOf(CustomException.class)
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PASSWORD);
+  }
+
 }

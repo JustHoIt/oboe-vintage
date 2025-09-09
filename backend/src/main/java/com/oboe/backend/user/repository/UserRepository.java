@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,8 +38,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 상태별 사용자 목록 조회
     List<User> findByStatus(UserStatus status);
 
-    // 밴된 사용자 목록 조회
-    List<User> findByIsBannedTrue();
 
     // 활성 사용자 목록 조회
     @Query("SELECT u FROM User u WHERE u.status = :status")
@@ -75,4 +74,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.email = :email AND u.phoneNumber = :phoneNumber AND u.socialProvider = 'LOCAL'")
     Optional<User> findByEmailAndPhoneNumberAndSocialProvider(@Param("email") String email, 
                                                             @Param("phoneNumber") String phoneNumber);
+
+    // PII 정리를 위한 메서드: 30일 전에 탈퇴한 사용자들 조회 (PII가 아직 정리되지 않은 사용자)
+    List<User> findByStatusAndDeletedAtBeforeAndPiiClearedAtIsNull(UserStatus status, LocalDateTime deletedAt);
+    
+    // PII 정리를 위한 메서드: PII 정리 예정일이 현재 시간보다 이전인 사용자들 조회
+    List<User> findByStatusAndPiiClearedAtBeforeAndPiiClearedAtIsNotNull(UserStatus status, LocalDateTime piiClearedAt);
 }

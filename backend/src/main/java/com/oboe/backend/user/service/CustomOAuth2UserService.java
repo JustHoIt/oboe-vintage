@@ -165,7 +165,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         .gender(convertGender(userInfo.getGender()))
         .profileImg(userInfo.getProfileImage())
         .lastLoginAt(LocalDateTime.now())
-        .isBanned(false)
         .build();
 
     log.info("사용자 빌더 완료 - 사용자 정보: {}", user);

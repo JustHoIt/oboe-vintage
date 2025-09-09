@@ -1,18 +1,19 @@
 package com.oboe.backend.message.service;
 
-import com.oboe.backend.message.entity.MessageHistory;
-import com.oboe.backend.message.repository.MessageHistoryRepository;
 import com.oboe.backend.common.component.RedisComponent;
-import com.oboe.backend.message.dto.SmsAuthRequestDto;
-import com.oboe.backend.user.dto.FindPasswordDto;
+import com.oboe.backend.common.dto.ResponseDto;
 import com.oboe.backend.common.exception.CustomException;
 import com.oboe.backend.common.exception.ErrorCode;
-import com.oboe.backend.common.dto.ResponseDto;
 import com.oboe.backend.common.util.PhoneNumberUtil;
-import com.oboe.backend.user.repository.UserRepository;
+import com.oboe.backend.message.dto.SmsAuthRequestDto;
+import com.oboe.backend.message.entity.MessageHistory;
+import com.oboe.backend.message.repository.MessageHistoryRepository;
+import com.oboe.backend.user.dto.FindPasswordDto;
 import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserStatus;
+import com.oboe.backend.user.repository.UserRepository;
+import jakarta.annotation.PostConstruct;
 import java.security.SecureRandom;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,20 @@ public class MessageService {
 
   @Value("${coolsms.fromnumber}")
   private String fromNumber;
+
+  @PostConstruct
+  private void validateConfiguration() {
+    if (apiKey == null || apiKey.isEmpty()) {
+      throw new IllegalStateException("SMS API Key가 설정되지 않았습니다.");
+    }
+    if (apiSecret == null || apiSecret.isEmpty()) {
+      throw new IllegalStateException("SMS API Secret이 설정되지 않았습니다.");
+    }
+    if (fromNumber == null || fromNumber.isEmpty()) {
+      throw new IllegalStateException("SMS 발신번호가 설정되지 않았습니다.");
+    }
+    log.info("SMS 서비스 설정 검증 완료");
+  }
 
   private static final char[] ALNUM = "ABCDEFGHJKLMNPQRSTUVWXYZ123456789".toCharArray(); // 헷갈리는 0,1,O,I 제외 예시
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -139,23 +154,24 @@ public class MessageService {
           return new CustomException(ErrorCode.USER_NOT_FOUND, "입력하신 정보와 일치하는 계정을 찾을 수 없습니다.");
         });
 
-    // 2. 사용자 상태 확인
+    // 2. 일반 계정인지 확인
+    if (user.getSocialProvider() != SocialProvider.LOCAL) {
+      log.warn("비밀번호 재설정 실패 - 소셜 로그인 사용자: {}, 제공자: {}", user.getEmail(), user.getSocialProvider());
+      throw new CustomException(ErrorCode.FORBIDDEN, "소셜 로그인 사용자는 비밀번호를 재설정할 수 없습니다.");
+    }
+
+    // 3. 사용자 상태 확인
     if (user.getStatus() != UserStatus.ACTIVE) {
       log.warn("비밀번호 찾기 실패 - 비활성 사용자: {}, 상태: {}", user.getEmail(), user.getStatus());
       throw new CustomException(ErrorCode.FORBIDDEN, "비활성화된 계정입니다.");
     }
 
-    if (user.isBanned()) {
-      log.warn("비밀번호 찾기 실패 - 밴된 사용자: {}", user.getEmail());
-      throw new CustomException(ErrorCode.FORBIDDEN, "정지된 계정입니다.");
-    }
-
-    // 3. 휴대폰 번호 유효성 검증
+    // 4. 휴대폰 번호 유효성 검증
     if (dto.getPhoneNumber() == null || dto.getPhoneNumber().trim().isEmpty()) {
       throw new CustomException(ErrorCode.SMS_INVALID_PHONE_NUMBER, "휴대폰 번호를 입력해주세요.");
     }
 
-    // 4. 인증번호 재발송 제한 확인 (1분 내 재발송 방지)
+    // 5. 인증번호 재발송 제한 확인 (1분 내 재발송 방지)
     String rateLimitKey = "sms_rate_limit:" + dto.getPhoneNumber();
     if (redisComponent.hasKey(rateLimitKey)) {
       log.warn("인증번호 재발송 제한 - 휴대폰번호: {}", dto.getPhoneNumber());
@@ -213,7 +229,7 @@ public class MessageService {
     if (dto.getPhoneNumber() == null || dto.getPhoneNumber().trim().isEmpty()) {
       throw new CustomException(ErrorCode.SMS_INVALID_PHONE_NUMBER, "휴대폰 번호를 입력해주세요.");
     }
-    
+
     if (dto.getVerificationCode() == null || dto.getVerificationCode().trim().isEmpty()) {
       throw new CustomException(ErrorCode.SMS_INVALID_VERIFICATION_CODE, "인증번호를 입력해주세요.");
     }
@@ -221,26 +237,26 @@ public class MessageService {
     // Redis에서 인증번호 조회
     String redisKey = "sms_auth:" + dto.getPhoneNumber();
     Object storedCode = redisComponent.get(redisKey);
-    
+
     if (storedCode == null) {
       log.warn("인증번호 만료 또는 존재하지 않음 - 휴대폰번호: {}", dto.getPhoneNumber());
       throw new CustomException(ErrorCode.SMS_VERIFICATION_EXPIRED, "인증번호가 만료되었거나 존재하지 않습니다.");
     }
-    
+
     // 인증번호 비교
     if (storedCode.toString().equals(dto.getVerificationCode())) {
       // 인증 성공 시 인증번호 삭제하고 인증 완료 상태 저장
       redisComponent.delete(redisKey);
-      
+
       // 인증 완료 상태 저장 (10분간 유효)
       String verifiedKey = "sms_verified:" + dto.getPhoneNumber();
       redisComponent.setExpiration(verifiedKey, "verified", Duration.ofMinutes(10));
-      
+
       log.info("SMS 인증 성공 - 휴대폰번호: {}", dto.getPhoneNumber());
       return ResponseDto.success("인증이 완료되었습니다.", "인증 성공");
     } else {
-      log.warn("SMS 인증 실패 - 휴대폰번호: {}, 입력된 인증번호: {}, 저장된 인증번호: {}", 
-               dto.getPhoneNumber(), dto.getVerificationCode(), storedCode);
+      log.warn("SMS 인증 실패 - 휴대폰번호: {}, 입력된 인증번호: {}, 저장된 인증번호: {}",
+          dto.getPhoneNumber(), dto.getVerificationCode(), storedCode);
       throw new CustomException(ErrorCode.SMS_VERIFICATION_FAILED, "인증번호가 일치하지 않습니다.");
     }
   }

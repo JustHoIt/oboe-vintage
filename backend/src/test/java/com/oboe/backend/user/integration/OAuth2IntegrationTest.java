@@ -61,7 +61,6 @@ class OAuth2IntegrationTest {
         .gender("M")
         .profileImg("kakao-profile.jpg")
         .lastLoginAt(LocalDateTime.now())
-        .isBanned(false)
         .build();
     
     // when
@@ -107,7 +106,6 @@ class OAuth2IntegrationTest {
         .gender("M")
         .profileImg("naver-profile.jpg")
         .lastLoginAt(LocalDateTime.now())
-        .isBanned(false)
         .build();
     
     // when
@@ -148,7 +146,6 @@ class OAuth2IntegrationTest {
         .socialId("123456789")
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
-        .isBanned(false)
         .build();
 
     User user2 = User.builder()
@@ -161,7 +158,6 @@ class OAuth2IntegrationTest {
         .socialId("naver123456")
         .role(UserRole.USER)
         .status(UserStatus.ACTIVE)
-        .isBanned(false)
         .build();
 
     // when
