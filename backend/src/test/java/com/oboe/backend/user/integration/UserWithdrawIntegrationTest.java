@@ -18,12 +18,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,9 +32,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @SpringBootTest
-@AutoConfigureWebMvc
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@TestPropertySource(properties = {
+    "jwt.secret=test_jwt_secret_key_for_testing_purposes_only_must_be_at_least_64_characters_long_for_HS512_algorithm",
+    "jwt.access-token-expiration=86400000",
+    "jwt.refresh-token-expiration=604800000"
+})
 @DisplayName("회원탈퇴 통합 테스트")
 class UserWithdrawIntegrationTest {
 
@@ -200,15 +206,14 @@ class UserWithdrawIntegrationTest {
             .content(objectMapper.writeValueAsString(withdrawDto)))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("소셜 로그인 사용자는 회원탈퇴를 할 수 없습니다."));
+        .andExpect(jsonPath("$.message").value("소셜 로그인 사용자는 해당 기능을 이용할 수 없습니다."));
   }
 
   @Test
   @DisplayName("회원탈퇴 실패 - 이미 탈퇴된 사용자")
   void withdrawUserFailAlreadyWithdrawn() throws Exception {
-    // given
-    testUser.setStatus(UserStatus.WITHDRAW);
-    testUser.setDeletedAt(LocalDateTime.now());
+    // given - 탈퇴 처리
+    testUser.withdraw();
     userRepository.save(testUser);
 
     WithdrawDto withdrawDto = WithdrawDto.builder()
@@ -223,7 +228,7 @@ class UserWithdrawIntegrationTest {
             .content(objectMapper.writeValueAsString(withdrawDto)))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("이미 탈퇴된 계정입니다."));
+        .andExpect(jsonPath("$.message").value("이용할수 없는 계정입니다."));
   }
 
   @Test

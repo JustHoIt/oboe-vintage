@@ -1,9 +1,11 @@
 package com.oboe.backend.config;
 
+import com.oboe.backend.common.constants.SecurityConstants;
 import com.oboe.backend.security.JwtAuthenticationFilter;
 import com.oboe.backend.security.OAuth2LoginFailureHandler;
 import com.oboe.backend.security.OAuth2LoginSuccessHandler;
 import com.oboe.backend.user.service.CustomOAuth2UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -33,7 +35,8 @@ public class SecurityConfig {
     http
         .csrf(csrf -> csrf.disable())
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(authz -> authz
             .requestMatchers("/api/v1/health").permitAll()
             .requestMatchers("/api/v1/db-test/**").permitAll()
@@ -51,7 +54,15 @@ public class SecurityConfig {
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().authenticated()
         )
-        .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtAuthenticationFilter,
+            org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
+        .exceptionHandling(exceptions -> exceptions
+            .authenticationEntryPoint((request, response, authException) -> {
+              response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+              response.setContentType("application/json");
+              response.getWriter().write(SecurityConstants.AUTHENTICATION_REQUIRED_MESSAGE);
+            })
+        )
         .oauth2Login(oauth2 -> oauth2
             .userInfoEndpoint(userInfo -> userInfo
                 .userService(customOAuth2UserService)
@@ -67,13 +78,8 @@ public class SecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
     // 개발 환경에서는 localhost 허용, 프로덕션에서는 특정 도메인만 허용
-    configuration.setAllowedOriginPatterns(Arrays.asList(
-        "http://localhost:3000",  // 프론트엔드 개발 서버
-        "http://localhost:3001",  // 추가 프론트엔드 포트
-        "http://localhost:5173",  // Vite 개발 서버
-        "https://yourdomain.com"  // 프로덕션 도메인 (실제 도메인으로 변경 필요)
-    ));
-    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedOriginPatterns(Arrays.asList(SecurityConstants.ALLOWED_ORIGINS));
+    configuration.setAllowedMethods(Arrays.asList(SecurityConstants.ALLOWED_METHODS));
     configuration.setAllowedHeaders(Arrays.asList("*"));
     configuration.setAllowCredentials(true);
     configuration.setExposedHeaders(Arrays.asList("Authorization"));

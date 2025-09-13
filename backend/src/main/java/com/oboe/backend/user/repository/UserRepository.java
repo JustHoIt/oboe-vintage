@@ -57,6 +57,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 이메일과 소셜 프로바이더로 사용자 찾기
     Optional<User> findByEmailAndSocialProvider(String email, SocialProvider socialProvider);
+    
+    // 이메일과 전화번호로 사용자 찾기 (모든 소셜 프로바이더 포함)
+    Optional<User> findByEmailAndPhoneNumber(String email, String phoneNumber);
+    
+    // 이메일, 전화번호로 사용자 찾기 (테스트용)
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.phoneNumber = :phoneNumber")
+    Optional<User> findByEmailAndPhoneNumberAndSocialProvider(@Param("email") String email, @Param("phoneNumber") String phoneNumber);
 
     // 소셜 ID 존재 여부 확인
     boolean existsBySocialId(String socialId);
@@ -65,15 +72,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.lastLoginAt >= :since")
     List<User> findUsersLoggedInSince(@Param("since") java.time.LocalDateTime since);
 
-    // 이름과 휴대폰번호로 사용자 찾기 (일반 계정만)
-    @Query("SELECT u FROM User u WHERE u.name = :name AND u.phoneNumber = :phoneNumber AND u.socialProvider = 'LOCAL'")
-    Optional<User> findByNameAndPhoneNumberAndSocialProvider(@Param("name") String name, 
-                                                           @Param("phoneNumber") String phoneNumber);
+    // 이름과 휴대폰번호로 사용자 찾기 (모든 소셜 프로바이더 포함)
+    @Query("SELECT u FROM User u WHERE u.name = :name AND u.phoneNumber = :phoneNumber")
+    Optional<User> findByNameAndPhoneNumber(@Param("name") String name, 
+                                          @Param("phoneNumber") String phoneNumber);
 
-    // 이메일과 휴대폰번호로 사용자 찾기 (일반 계정만)
-    @Query("SELECT u FROM User u WHERE u.email = :email AND u.phoneNumber = :phoneNumber AND u.socialProvider = 'LOCAL'")
-    Optional<User> findByEmailAndPhoneNumberAndSocialProvider(@Param("email") String email, 
-                                                            @Param("phoneNumber") String phoneNumber);
 
     // PII 정리를 위한 메서드: 30일 전에 탈퇴한 사용자들 조회 (PII가 아직 정리되지 않은 사용자)
     List<User> findByStatusAndDeletedAtBeforeAndPiiClearedAtIsNull(UserStatus status, LocalDateTime deletedAt);

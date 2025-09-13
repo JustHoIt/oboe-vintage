@@ -1,8 +1,8 @@
 package com.oboe.backend.message.controller;
 
+import com.oboe.backend.common.dto.ResponseDto;
 import com.oboe.backend.message.dto.SmsAuthRequestDto;
 import com.oboe.backend.message.service.MessageService;
-import com.oboe.backend.common.dto.ResponseDto;
 import com.oboe.backend.user.dto.FindPasswordDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,7 +28,7 @@ public class MessageController {
 
   // ✅회원가입 인증번호 발송
   @Operation(
-      summary = "인증번호 발송", 
+      summary = "인증번호 발송",
       description = "입력받은 휴대폰 번호로 6자리 인증번호를 발송합니다. 3분간 유효하며, 회원가입 시 사용됩니다.",
       responses = {
           @ApiResponse(responseCode = "200", description = "인증번호 발송 성공"),
@@ -38,14 +38,12 @@ public class MessageController {
   )
   @PostMapping(value = "/sendCertification", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<ResponseDto<String>> sendCertification(@RequestBody SmsAuthRequestDto dto) {
-    log.info("=== SMS 인증번호 발송 요청 ===");
-    log.info("휴대폰번호: {}", dto.getPhoneNumber());
     return ResponseEntity.ok(messageService.sendMessage(dto));
   }
 
   // ✅인증번호 확인
   @Operation(
-      summary = "인증번호 검증", 
+      summary = "인증번호 검증",
       description = "입력받은 인증번호를 검증합니다. 발송된 인증번호와 일치하고 3분 이내여야 성공합니다.",
       responses = {
           @ApiResponse(responseCode = "200", description = "인증번호 검증 성공"),
@@ -57,14 +55,12 @@ public class MessageController {
   @PostMapping(value = "/verifyCertification", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<ResponseDto<String>> verifyCertification(
       @RequestBody SmsAuthRequestDto dto) {
-    log.info("=== SMS 인증번호 검증 요청 ===");
-    log.info("휴대폰번호: {}, 인증번호: {}", dto.getPhoneNumber(), dto.getVerificationCode());
     return ResponseEntity.ok(messageService.verifyMessage(dto));
   }
 
   // ✅비밀번호 찾기 인증번호 발송
   @Operation(
-      summary = "비밀번호 찾기 인증번호 발송", 
+      summary = "비밀번호 찾기 인증번호 발송",
       description = "이메일과 휴대폰번호로 계정을 검증한 후 인증번호를 발송합니다. OAuth2 계정은 제외됩니다. 3분간 유효합니다.",
       responses = {
           @ApiResponse(responseCode = "200", description = "인증번호 발송 성공"),
@@ -75,9 +71,8 @@ public class MessageController {
       }
   )
   @PostMapping(value = "/sendPasswordReset", produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<ResponseDto<String>> sendPasswordResetSms(@Valid @RequestBody FindPasswordDto dto) {
-    log.info("=== 비밀번호 찾기 SMS 인증번호 발송 요청 ===");
-    log.info("이메일: {}, 휴대폰번호: {}", dto.getEmail(), dto.getPhoneNumber());
+  public ResponseEntity<ResponseDto<String>> sendPasswordResetSms(
+      @Valid @RequestBody FindPasswordDto dto) {
     return ResponseEntity.ok(messageService.sendPasswordResetMessage(dto));
   }
 
