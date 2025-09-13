@@ -1,11 +1,9 @@
 package com.oboe.backend.common.exception;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 @Getter
-@RequiredArgsConstructor
 public enum ErrorCode {
 
   // 공통 오류
@@ -25,6 +23,9 @@ public enum ErrorCode {
   PHONE_NUMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 전화번호입니다."),
   INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 올바르지 않습니다."),
   INVALID_EMAIL_FORMAT(HttpStatus.BAD_REQUEST, "이메일 형식이 올바르지 않습니다."),
+  SOCIAL_LOGIN_NOT_SUPPORTED(HttpStatus.FORBIDDEN, "소셜 로그인 사용자는 해당 기능을 이용할 수 없습니다."),
+  USER_ALREADY_WITHDRAWN(HttpStatus.FORBIDDEN, "이미 탈퇴된 계정입니다."),
+  USER_SUSPENDED(HttpStatus.FORBIDDEN, "정지된 계정입니다."),
 
 
   // 파일 관련 오류
@@ -44,4 +45,9 @@ public enum ErrorCode {
 
   private final HttpStatus httpStatus;
   private final String message;
+  
+  ErrorCode(HttpStatus httpStatus, String message) {
+    this.httpStatus = httpStatus;
+    this.message = message;
+  }
 }

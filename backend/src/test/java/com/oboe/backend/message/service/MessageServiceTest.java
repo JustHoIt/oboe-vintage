@@ -243,12 +243,11 @@ class MessageServiceTest {
 
         when(userRepository.findByEmailAndPhoneNumberAndSocialProvider("test@example.com", "01012345678"))
                 .thenReturn(Optional.of(oauth2User));
-        when(redisComponent.hasKey("sms_rate_limit:01012345678")).thenReturn(false);
 
-        // when & then - OAuth2 사용자도 SMS 발송은 성공하지만, 실제 비밀번호 재설정에서 막힘
+        // when & then - OAuth2 사용자는 비밀번호 재설정 불가
         assertThatThrownBy(() -> messageService.sendPasswordResetMessage(dto))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SMS_SEND_FAILED);
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SOCIAL_LOGIN_NOT_SUPPORTED);
     }
 
     // ========== 인증번호 검증 테스트 ==========

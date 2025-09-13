@@ -312,4 +312,40 @@ class UserRepositoryTest {
     // then
     assertThat(userCount).isEqualTo(3);
   }
+
+  @Test
+  @DisplayName("이름과 휴대폰번호로 사용자 찾기 테스트 - 로컬 사용자")
+  void findByNameAndPhoneNumber_LocalUser() {
+    // when
+    Optional<User> foundUser = userRepository.findByNameAndPhoneNumber("홍길동", "010-1234-5678");
+
+    // then
+    assertThat(foundUser).isPresent();
+    assertThat(foundUser.get().getName()).isEqualTo("홍길동");
+    assertThat(foundUser.get().getPhoneNumber()).isEqualTo("010-1234-5678");
+    assertThat(foundUser.get().getSocialProvider()).isEqualTo(SocialProvider.LOCAL);
+  }
+
+  @Test
+  @DisplayName("이름과 휴대폰번호로 사용자 찾기 테스트 - 소셜 사용자")
+  void findByNameAndPhoneNumber_SocialUser() {
+    // when
+    Optional<User> foundUser = userRepository.findByNameAndPhoneNumber("이영희", "010-5555-7777");
+
+    // then
+    assertThat(foundUser).isPresent();
+    assertThat(foundUser.get().getName()).isEqualTo("이영희");
+    assertThat(foundUser.get().getPhoneNumber()).isEqualTo("010-5555-7777");
+    assertThat(foundUser.get().getSocialProvider()).isEqualTo(SocialProvider.KAKAO);
+  }
+
+  @Test
+  @DisplayName("이름과 휴대폰번호로 사용자 찾기 테스트 - 사용자 없음")
+  void findByNameAndPhoneNumber_NotFound() {
+    // when
+    Optional<User> foundUser = userRepository.findByNameAndPhoneNumber("존재하지않는사용자", "010-9999-9999");
+
+    // then
+    assertThat(foundUser).isEmpty();
+  }
 }

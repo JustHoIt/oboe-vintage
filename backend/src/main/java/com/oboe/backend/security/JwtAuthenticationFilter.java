@@ -26,21 +26,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final UserRepository userRepository;
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
-    
+
     try {
       String token = extractTokenFromRequest(request);
-      
+
       if (token != null && jwtUtil.isAccessToken(token)) {
         String email = jwtUtil.getEmailFromToken(token);
-        
+
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
           User user = userRepository.findByEmail(email).orElse(null);
-          
+
           if (user != null && jwtUtil.validateToken(token, email)) {
-            // 사용자 상태 확인
-            if (isUserValid(user)) {
+            // 사용자 상태 확인 - 회원탈퇴 API는 탈퇴된 사용자도 허용
+            if (isUserValid(user) || isWithdrawRequest(request)) {
               setAuthentication(user, token);
               log.debug("JWT 인증 성공 - 사용자: {}", email);
             } else {
@@ -55,7 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       log.error("JWT 인증 처리 중 오류 발생", e);
       SecurityContextHolder.clearContext();
     }
-    
+
     filterChain.doFilter(request, response);
   }
 
@@ -78,15 +78,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   }
 
   /**
+   * 회원탈퇴 요청인지 확인
+   */
+  private boolean isWithdrawRequest(HttpServletRequest request) {
+    return "DELETE".equals(request.getMethod()) &&
+        request.getRequestURI().equals("/api/v1/users/me");
+  }
+
+  /**
    * SecurityContext에 인증 정보 설정
    */
   private void setAuthentication(User user, String token) {
     ArrayList<SimpleGrantedAuthority> authorities = new ArrayList<>();
     authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
-    
-    UsernamePasswordAuthenticationToken authentication = 
+
+    UsernamePasswordAuthenticationToken authentication =
         new UsernamePasswordAuthenticationToken(user, token, authorities);
-    
+
     SecurityContextHolder.getContext().setAuthentication(authentication);
   }
 
@@ -96,17 +104,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
     String path = request.getRequestURI();
-    
+
     // JWT 필터를 건너뛸 경로들
     return path.startsWith("/api/v1/health") ||
-           path.startsWith("/api/v1/users/signup") ||
-           path.startsWith("/api/v1/users/login") ||
-           path.startsWith("/api/v1/message") ||
-           path.startsWith("/login/oauth2") ||
-           path.startsWith("/oauth2") ||
-           path.startsWith("/swagger-ui") ||
-           path.startsWith("/api-docs") ||
-           path.startsWith("/v3/api-docs") ||
-           path.startsWith("/actuator");
+        path.startsWith("/api/v1/users/signup") ||
+        path.startsWith("/api/v1/users/login") ||
+        path.startsWith("/api/v1/message") ||
+        path.startsWith("/login/oauth2") ||
+        path.startsWith("/oauth2") ||
+        path.startsWith("/swagger-ui") ||
+        path.startsWith("/api-docs") ||
+        path.startsWith("/v3/api-docs") ||
+        path.startsWith("/actuator");
   }
 }

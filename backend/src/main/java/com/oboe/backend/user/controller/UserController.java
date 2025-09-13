@@ -53,7 +53,6 @@ public class UserController {
   )
   @PostMapping(value = "/signup", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<ResponseDto<User>> signUp(@Valid @RequestBody SignUpDto dto) {
-    log.info("회원가입 시작 - 이메일: {}, 닉네임: {}", dto.getEmail(), dto.getNickname());
     return ResponseEntity.ok(userService.signUp(dto));
   }
 
@@ -69,7 +68,6 @@ public class UserController {
   )
   @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<ResponseDto<LoginResponseDto>> login(@Valid @RequestBody LoginDto dto) {
-    log.info("로그인 요청 - 이메일: {}", dto.getEmail());
     return ResponseEntity.ok(userService.login(dto));
   }
 
@@ -87,7 +85,6 @@ public class UserController {
   @PostMapping(value = "/refresh", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<ResponseDto<TokenResponseDto>> refreshToken(
       @Valid @RequestBody TokenRefreshDto dto) {
-    log.info("토큰 갱신 요청");
     return ResponseEntity.ok(userService.refreshToken(dto));
   }
 
@@ -102,7 +99,6 @@ public class UserController {
   @PostMapping(value = "/logout", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<ResponseDto<String>> logout(
       @RequestHeader("Authorization") String authorization) {
-    log.info("로그아웃 요청");
     return ResponseEntity.ok(userService.logout(authorization));
   }
 
@@ -119,7 +115,6 @@ public class UserController {
   @GetMapping(value = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<ResponseDto<UserProfileDto>> getCurrentUser(
       @RequestHeader("Authorization") String authorization) {
-    log.info("현재 사용자 정보 조회 요청");
     return ResponseEntity.ok(userService.getCurrentUser(authorization));
   }
 
@@ -139,7 +134,6 @@ public class UserController {
   public ResponseEntity<ResponseDto<UserProfileDto>> updateUser(
       @RequestHeader("Authorization") String authorization,
       @Valid @RequestBody UserUpdateDto dto) {
-    log.info("사용자 정보 수정 요청");
     return ResponseEntity.ok(userService.updateUser(authorization, dto));
   }
 
@@ -157,7 +151,6 @@ public class UserController {
   public ResponseEntity<ResponseDto<String>> changePassword(
       @RequestHeader("Authorization") String authorization,
       @Valid @RequestBody PasswordChangeDto dto) {
-    log.info("비밀번호 변경 요청");
     return ResponseEntity.ok(userService.changePassword(authorization, dto));
   }
 
@@ -175,7 +168,6 @@ public class UserController {
   public ResponseEntity<ResponseDto<String>> uploadProfileImage(
       @RequestHeader("Authorization") String authorization,
       @RequestParam("filePath") String filePath) {
-    log.info("프로필 이미지 업로드 요청");
     return ResponseEntity.ok(userService.uploadProfileImage(authorization, filePath));
   }
 
@@ -227,7 +219,6 @@ public class UserController {
   public ResponseEntity<ResponseDto<String>> withdrawUser(
       @RequestHeader("Authorization") String authorization,
       @Valid @RequestBody WithdrawDto dto) {
-    log.info("회원탈퇴 요청");
     return ResponseEntity.ok(userService.withdrawUser(authorization, dto));
   }
 

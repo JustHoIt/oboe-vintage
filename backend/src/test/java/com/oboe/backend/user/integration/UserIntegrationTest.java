@@ -89,11 +89,9 @@ class UserIntegrationTest {
     User savedUser = userRepository.save(user);
     entityManager.flush();
 
-    // when
-    savedUser.setName("수정된이름");
-    savedUser.setNickname("수정된닉네임");
-    savedUser.setAddress("수정된주소", "수정된상세주소", "01111");
-    savedUser.setStatus(UserStatus.SUSPENDED);
+    // when - 수정된 사용자 생성 (비즈니스 메서드로 수정)
+    savedUser.updateProfile("수정된닉네임", "수정된주소", "수정된상세주소", "01111");
+    savedUser.changeStatus(UserStatus.SUSPENDED);
 
     User updatedUser = userRepository.save(savedUser);
     entityManager.flush();
@@ -103,7 +101,6 @@ class UserIntegrationTest {
 
     // then
     assertThat(foundUser).isNotNull();
-    assertThat(foundUser.getName()).isEqualTo("수정된이름");
     assertThat(foundUser.getNickname()).isEqualTo("수정된닉네임");
     assertThat(foundUser.getRoadAddress()).isEqualTo("수정된주소");
     assertThat(foundUser.getDetailAddress()).isEqualTo("수정된상세주소");
@@ -135,15 +132,29 @@ class UserIntegrationTest {
   @DisplayName("중복 이메일 검증 통합 테스트")
   void duplicateEmailValidation() {
     // given
-    User user1 = createTestUser();
-    user1.setEmail("duplicate@example.com");
+    User user1 = User.builder()
+        .email("duplicate@example.com")
+        .password("password123")
+        .name("테스트사용자")
+        .nickname("test123")
+        .phoneNumber("010-1234-5678")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
     userRepository.save(user1);
     entityManager.flush();
 
-    User user2 = createTestUser();
-    user2.setEmail("duplicate@example.com");
-    user2.setNickname("different123");
-    user2.setPhoneNumber("010-9999-8888");
+    User user2 = User.builder()
+        .email("duplicate@example.com")
+        .password("password123")
+        .name("테스트사용자2")
+        .nickname("different123")
+        .phoneNumber("010-9999-8888")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
     // when & then
     assertThatThrownBy(() -> {
@@ -156,15 +167,29 @@ class UserIntegrationTest {
   @DisplayName("닉네임 중복 허용 통합 테스트")
   void allowDuplicateNickname() {
     // given
-    User user1 = createTestUser();
-    user1.setNickname("duplicate123");
+    User user1 = User.builder()
+        .email("test1@example.com")
+        .password("password123")
+        .name("테스트사용자1")
+        .nickname("duplicate123")
+        .phoneNumber("010-1234-5678")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
     userRepository.save(user1);
     entityManager.flush();
 
-    User user2 = createTestUser();
-    user2.setEmail("different@example.com");
-    user2.setNickname("duplicate123"); // 같은 닉네임 사용
-    user2.setPhoneNumber("010-9999-8888");
+    User user2 = User.builder()
+        .email("different@example.com")
+        .password("password123")
+        .name("테스트사용자2")
+        .nickname("duplicate123") // 같은 닉네임 사용
+        .phoneNumber("010-9999-8888")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
     // when
     User savedUser2 = userRepository.save(user2);
@@ -180,15 +205,29 @@ class UserIntegrationTest {
   @DisplayName("중복 전화번호 검증 통합 테스트")
   void duplicatePhoneNumberValidation() {
     // given
-    User user1 = createTestUser();
-    user1.setPhoneNumber("010-1111-2222");
+    User user1 = User.builder()
+        .email("test1@example.com")
+        .password("password123")
+        .name("테스트사용자1")
+        .nickname("test123")
+        .phoneNumber("010-1111-2222")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
     userRepository.save(user1);
     entityManager.flush();
 
-    User user2 = createTestUser();
-    user2.setEmail("different@example.com");
-    user2.setNickname("different123");
-    user2.setPhoneNumber("010-1111-2222");
+    User user2 = User.builder()
+        .email("different@example.com")
+        .password("password123")
+        .name("테스트사용자2")
+        .nickname("different123")
+        .phoneNumber("010-1111-2222")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
     // when & then
     assertThatThrownBy(() -> {
@@ -201,23 +240,38 @@ class UserIntegrationTest {
   @DisplayName("사용자 상태별 조회 통합 테스트")
   void findUsersByStatus() {
     // given
-    User activeUser1 = createTestUser();
-    activeUser1.setEmail("active1@example.com");
-    activeUser1.setNickname("active1");
-    activeUser1.setPhoneNumber("010-1111-1111");
-    activeUser1.setStatus(UserStatus.ACTIVE);
+    User activeUser1 = User.builder()
+        .email("active1@example.com")
+        .password("password123")
+        .name("활성사용자1")
+        .nickname("active1")
+        .phoneNumber("010-1111-1111")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
-    User activeUser2 = createTestUser();
-    activeUser2.setEmail("active2@example.com");
-    activeUser2.setNickname("active2");
-    activeUser2.setPhoneNumber("010-2222-2222");
-    activeUser2.setStatus(UserStatus.ACTIVE);
+    User activeUser2 = User.builder()
+        .email("active2@example.com")
+        .password("password123")
+        .name("활성사용자2")
+        .nickname("active2")
+        .phoneNumber("010-2222-2222")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
-    User suspendedUser = createTestUser();
-    suspendedUser.setEmail("suspended@example.com");
-    suspendedUser.setNickname("suspended");
-    suspendedUser.setPhoneNumber("010-3333-3333");
-    suspendedUser.setStatus(UserStatus.SUSPENDED);
+    User suspendedUser = User.builder()
+        .email("suspended@example.com")
+        .password("password123")
+        .name("정지사용자")
+        .nickname("suspended")
+        .phoneNumber("010-3333-3333")
+        .role(UserRole.USER)
+        .status(UserStatus.SUSPENDED)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
     userRepository.saveAll(List.of(activeUser1, activeUser2, suspendedUser));
     entityManager.flush();
@@ -238,23 +292,38 @@ class UserIntegrationTest {
   @DisplayName("사용자 역할별 조회 통합 테스트")
   void findUsersByRole() {
     // given
-    User user1 = createTestUser();
-    user1.setEmail("user1@example.com");
-    user1.setNickname("user1");
-    user1.setPhoneNumber("010-1111-1111");
-    user1.setRole(UserRole.USER);
+    User user1 = User.builder()
+        .email("user1@example.com")
+        .password("password123")
+        .name("사용자1")
+        .nickname("user1")
+        .phoneNumber("010-1111-1111")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
-    User user2 = createTestUser();
-    user2.setEmail("user2@example.com");
-    user2.setNickname("user2");
-    user2.setPhoneNumber("010-2222-2222");
-    user2.setRole(UserRole.USER);
+    User user2 = User.builder()
+        .email("user2@example.com")
+        .password("password123")
+        .name("사용자2")
+        .nickname("user2")
+        .phoneNumber("010-2222-2222")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
-    User admin = createTestUser();
-    admin.setEmail("admin@example.com");
-    admin.setNickname("admin");
-    admin.setPhoneNumber("010-3333-3333");
-    admin.setRole(UserRole.ADMIN);
+    User admin = User.builder()
+        .email("admin@example.com")
+        .password("password123")
+        .name("관리자")
+        .nickname("admin")
+        .phoneNumber("010-3333-3333")
+        .role(UserRole.ADMIN)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
     userRepository.saveAll(List.of(user1, user2, admin));
     entityManager.flush();
@@ -275,17 +344,27 @@ class UserIntegrationTest {
   @DisplayName("사용자 검색 통합 테스트")
   void searchUsers() {
     // given
-    User user1 = createTestUser();
-    user1.setEmail("hong@example.com");
-    user1.setNickname("hong123");
-    user1.setPhoneNumber("010-1111-1111");
-    user1.setName("홍길동");
+    User user1 = User.builder()
+        .email("hong@example.com")
+        .password("password123")
+        .name("홍길동")
+        .nickname("hong123")
+        .phoneNumber("010-1111-1111")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
-    User user2 = createTestUser();
-    user2.setEmail("kim@example.com");
-    user2.setNickname("kim456");
-    user2.setPhoneNumber("010-2222-2222");
-    user2.setName("김철수");
+    User user2 = User.builder()
+        .email("kim@example.com")
+        .password("password123")
+        .name("김철수")
+        .nickname("kim456")
+        .phoneNumber("010-2222-2222")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
 
     userRepository.saveAll(List.of(user1, user2));
     entityManager.flush();

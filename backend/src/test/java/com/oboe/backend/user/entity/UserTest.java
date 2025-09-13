@@ -102,29 +102,22 @@ class UserTest {
   }
 
   @Test
-  @DisplayName("User 필드 수정 테스트")
-  void updateUserFields() {
+  @DisplayName("User 프로필 업데이트 테스트")
+  void updateUserProfile() {
     // given
-    String newName = "수정된이름";
     String newNickname = "수정된닉네임";
-    String newRoadAddress = "수정된주소";
-    String newDetailAddress = "수정된주소";
-    String newZipCode = "수정된 우편번호";
-    UserStatus newStatus = UserStatus.SUSPENDED;
+    String newRoadAddress = "수정된도로주소";
+    String newDetailAddress = "수정된상세주소";
+    String newZipCode = "12345";
 
     // when
-    user.setName(newName);
-    user.setNickname(newNickname);
-    user.setAddress(newRoadAddress, newDetailAddress, newZipCode);
-    user.setStatus(newStatus);
+    user.updateProfile(newNickname, newRoadAddress, newDetailAddress, newZipCode);
 
     // then
-    assertThat(user.getName()).isEqualTo(newName);
     assertThat(user.getNickname()).isEqualTo(newNickname);
-    assertThat(user.getDetailAddress()).isEqualTo(newRoadAddress);
-    assertThat(user.getRoadAddress()).isEqualTo(newDetailAddress);
+    assertThat(user.getRoadAddress()).isEqualTo(newRoadAddress);
+    assertThat(user.getDetailAddress()).isEqualTo(newDetailAddress);
     assertThat(user.getZipCode()).isEqualTo(newZipCode);
-    assertThat(user.getStatus()).isEqualTo(newStatus);
   }
 
   @Test
@@ -153,13 +146,13 @@ class UserTest {
     assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
 
     // when - 정지 상태로 변경
-    user.setStatus(UserStatus.SUSPENDED);
+    user.changeStatus(UserStatus.SUSPENDED);
 
     // then
     assertThat(user.getStatus()).isEqualTo(UserStatus.SUSPENDED);
 
     // when - 탈퇴 상태로 변경
-    user.setStatus(UserStatus.WITHDRAW);
+    user.changeStatus(UserStatus.WITHDRAW);
 
     // then
     assertThat(user.getStatus()).isEqualTo(UserStatus.WITHDRAW);
@@ -172,7 +165,7 @@ class UserTest {
     assertThat(user.getRole()).isEqualTo(UserRole.USER);
 
     // when
-    user.setRole(UserRole.ADMIN);
+    user.changeRole(UserRole.ADMIN);
 
     // then
     assertThat(user.getRole()).isEqualTo(UserRole.ADMIN);
@@ -183,14 +176,20 @@ class UserTest {
   void testLastLoginAtUpdate() {
     // given
     LocalDateTime originalLoginTime = user.getLastLoginAt();
-    LocalDateTime newLoginTime = LocalDateTime.now().plusHours(1);
-
+    
+    // 시간 차이를 만들기 위해 잠시 대기
+    try {
+      Thread.sleep(1);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    
     // when
-    user.setLastLoginAt(newLoginTime);
+    user.updateLastLoginAt();
 
     // then
-    assertThat(user.getLastLoginAt()).isEqualTo(newLoginTime);
-    assertThat(user.getLastLoginAt()).isNotEqualTo(originalLoginTime);
+    assertThat(user.getLastLoginAt()).isNotNull();
+    assertThat(user.getLastLoginAt()).isAfterOrEqualTo(originalLoginTime);
   }
 
   @Test
@@ -219,43 +218,6 @@ class UserTest {
   }
 
   @Test
-  @DisplayName("OAuth2 필드 수정 테스트")
-  void updateOAuth2Fields() {
-    // given
-    String newSocialId = "987654321";
-    String newProfileImg = "https://example.com/new-profile.jpg";
-    SocialProvider newSocialProvider = SocialProvider.KAKAO;
-
-    // when
-    user.setSocialId(newSocialId);
-    user.setProfileImg(newProfileImg);
-    user.setSocialProvider(newSocialProvider);
-
-    // then
-    assertThat(user.getSocialId()).isEqualTo(newSocialId);
-    assertThat(user.getProfileImg()).isEqualTo(newProfileImg);
-    assertThat(user.getSocialProvider()).isEqualTo(newSocialProvider);
-  }
-
-  @Test
-  @DisplayName("로컬 사용자를 OAuth2 사용자로 전환 테스트")
-  void convertLocalUserToOAuth2() {
-    // given
-    assertThat(user.getSocialProvider()).isEqualTo(SocialProvider.LOCAL);
-    assertThat(user.getSocialId()).isNull();
-
-    // when
-    user.setSocialProvider(SocialProvider.KAKAO);
-    user.setSocialId("123456789");
-    user.setProfileImg("https://example.com/kakao-profile.jpg");
-
-    // then
-    assertThat(user.getSocialProvider()).isEqualTo(SocialProvider.KAKAO);
-    assertThat(user.getSocialId()).isEqualTo("123456789");
-    assertThat(user.getProfileImg()).isEqualTo("https://example.com/kakao-profile.jpg");
-  }
-
-  @Test
   @DisplayName("네이버 OAuth2 사용자 생성 테스트")
   void createNaverOAuth2User() {
     // given & when
@@ -278,5 +240,303 @@ class UserTest {
     assertThat(naverUser.getSocialProvider()).isEqualTo(SocialProvider.NAVER);
     assertThat(naverUser.getSocialId()).isEqualTo("naver123456");
     assertThat(naverUser.getProfileImg()).isEqualTo("https://example.com/naver-profile.jpg");
+  }
+
+  @Test
+  @DisplayName("주소 업데이트 테스트")
+  void updateAddress() {
+    // given
+    String newRoadAddress = "부산광역시 해운대구";
+    String newDetailAddress = "우동 123번지";
+    String newZipCode = "48000";
+
+    // when
+    user.updateAddress(newRoadAddress, newDetailAddress, newZipCode);
+
+    // then
+    assertThat(user.getRoadAddress()).isEqualTo(newRoadAddress);
+    assertThat(user.getDetailAddress()).isEqualTo(newDetailAddress);
+    assertThat(user.getZipCode()).isEqualTo(newZipCode);
+  }
+
+  @Test
+  @DisplayName("프로필 이미지 업데이트 테스트")
+  void updateProfileImage() {
+    // given
+    String newProfileImg = "https://example.com/new-profile.jpg";
+
+    // when
+    user.updateProfileImage(newProfileImg);
+
+    // then
+    assertThat(user.getProfileImg()).isEqualTo(newProfileImg);
+  }
+
+  @Test
+  @DisplayName("비밀번호 변경 테스트")
+  void changePassword() {
+    // given
+    String newPassword = "newSecurePassword123!";
+
+    // when
+    user.changePassword(newPassword);
+
+    // then
+    assertThat(user.getPassword()).isEqualTo(newPassword);
+  }
+
+  @Test
+  @DisplayName("비밀번호 변경 시 null 또는 빈 문자열 예외 테스트")
+  void changePasswordWithInvalidInput() {
+    // when & then
+    assertThatThrownBy(() -> user.changePassword(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("비밀번호는 필수입니다.");
+
+    assertThatThrownBy(() -> user.changePassword(""))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("비밀번호는 필수입니다.");
+
+    assertThatThrownBy(() -> user.changePassword("   "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("비밀번호는 필수입니다.");
+  }
+
+  @Test
+  @DisplayName("회원 탈퇴 처리 테스트")
+  void withdraw() {
+    // given
+    assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+    assertThat(user.getDeletedAt()).isNull();
+    assertThat(user.getPiiClearedAt()).isNull();
+
+    // when
+    user.withdraw();
+
+    // then
+    assertThat(user.getStatus()).isEqualTo(UserStatus.WITHDRAW);
+    assertThat(user.getDeletedAt()).isNotNull();
+    assertThat(user.getPiiClearedAt()).isNotNull();
+    assertThat(user.getPiiClearedAt()).isAfter(user.getDeletedAt());
+  }
+
+  @Test
+  @DisplayName("이메일 익명화 테스트")
+  void anonymizeEmail() {
+    // given
+    String originalEmail = user.getEmail();
+    String anonymizedEmail = "anonymous_123@deleted.com";
+
+    // when
+    user.anonymizeEmail(anonymizedEmail);
+
+    // then
+    assertThat(user.getEmail()).isEqualTo(anonymizedEmail);
+    assertThat(user.getEmail()).isNotEqualTo(originalEmail);
+  }
+
+  @Test
+  @DisplayName("이메일 익명화 시 null 또는 빈 문자열 예외 테스트")
+  void anonymizeEmailWithInvalidInput() {
+    // when & then
+    assertThatThrownBy(() -> user.anonymizeEmail(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("익명화된 이메일은 필수입니다.");
+
+    assertThatThrownBy(() -> user.anonymizeEmail(""))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("익명화된 이메일은 필수입니다.");
+
+    assertThatThrownBy(() -> user.anonymizeEmail("   "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("익명화된 이메일은 필수입니다.");
+  }
+
+  @Test
+  @DisplayName("개인정보 정리 처리 테스트")
+  void clearPersonalInfo() {
+    // given
+    String originalEmail = user.getEmail();
+    String originalName = user.getName();
+    String originalNickname = user.getNickname();
+    String originalPhoneNumber = user.getPhoneNumber();
+
+    // when
+    user.clearPersonalInfo();
+
+    // then
+    assertThat(user.getEmail()).isEqualTo("deleted_user_" + user.getId() + "@deleted.com");
+    assertThat(user.getName()).isEqualTo("탈퇴한사용자");
+    assertThat(user.getNickname()).isEqualTo("탈퇴한사용자");
+    assertThat(user.getPhoneNumber()).isEqualTo("000-0000-0000");
+    assertThat(user.getRoadAddress()).isNull();
+    assertThat(user.getDetailAddress()).isNull();
+    assertThat(user.getZipCode()).isNull();
+    assertThat(user.getBirthDate()).isNull();
+    assertThat(user.getGender()).isNull();
+    assertThat(user.getProfileImg()).isNull();
+    assertThat(user.getPiiClearedAt()).isNotNull();
+
+    // 원래 정보와 다른지 확인
+    assertThat(user.getEmail()).isNotEqualTo(originalEmail);
+    assertThat(user.getName()).isNotEqualTo(originalName);
+    assertThat(user.getNickname()).isNotEqualTo(originalNickname);
+    assertThat(user.getPhoneNumber()).isNotEqualTo(originalPhoneNumber);
+  }
+
+  @Test
+  @DisplayName("소셜 로그인 정보 설정 테스트")
+  void setSocialInfo() {
+    // given
+    SocialProvider newProvider = SocialProvider.KAKAO;
+    String newSocialId = "kakao987654321";
+
+    // when
+    user.setSocialInfo(newProvider, newSocialId);
+
+    // then
+    assertThat(user.getSocialProvider()).isEqualTo(newProvider);
+    assertThat(user.getSocialId()).isEqualTo(newSocialId);
+  }
+
+  @Test
+  @DisplayName("소셜 로그인 정보 설정 시 null 값 예외 테스트")
+  void setSocialInfoWithInvalidInput() {
+    // when & then
+    assertThatThrownBy(() -> user.setSocialInfo(null, "socialId"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("소셜 로그인 정보는 필수입니다.");
+
+    assertThatThrownBy(() -> user.setSocialInfo(SocialProvider.KAKAO, null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("소셜 로그인 정보는 필수입니다.");
+  }
+
+  @Test
+  @DisplayName("활성 사용자 확인 테스트")
+  void isActive() {
+    // given - setUp에서 ACTIVE 상태로 설정됨
+    assertThat(user.isActive()).isTrue();
+
+    // when - 상태를 SUSPENDED로 변경
+    user.changeStatus(UserStatus.SUSPENDED);
+
+    // then
+    assertThat(user.isActive()).isFalse();
+
+    // when - 상태를 WITHDRAW로 변경
+    user.changeStatus(UserStatus.WITHDRAW);
+
+    // then
+    assertThat(user.isActive()).isFalse();
+  }
+
+  @Test
+  @DisplayName("소셜 사용자 확인 테스트")
+  void isSocialUser() {
+    // given - setUp에서 SocialProvider.LOCAL로 설정됨
+    assertThat(user.isSocialUser()).isFalse();
+
+    // when - 카카오 소셜 정보 설정
+    user.setSocialInfo(SocialProvider.KAKAO, "kakao123");
+
+    // then
+    assertThat(user.isSocialUser()).isTrue();
+
+    // when - 네이버 소셜 정보 설정
+    user.setSocialInfo(SocialProvider.NAVER, "naver123");
+
+    // then
+    assertThat(user.isSocialUser()).isTrue();
+  }
+
+  @Test
+  @DisplayName("탈퇴한 사용자 확인 테스트")
+  void isWithdrawn() {
+    // given - setUp에서 ACTIVE 상태로 설정됨
+    assertThat(user.isWithdrawn()).isFalse();
+
+    // when - 탈퇴 처리
+    user.withdraw();
+
+    // then
+    assertThat(user.isWithdrawn()).isTrue();
+  }
+
+  @Test
+  @DisplayName("PII 정리된 사용자 확인 테스트")
+  void isPiiCleared() {
+    // given - 초기 상태에서는 PII가 정리되지 않음
+    assertThat(user.isPiiCleared()).isFalse();
+
+    // when - 개인정보 정리 처리
+    user.clearPersonalInfo();
+
+    // then
+    assertThat(user.isPiiCleared()).isTrue();
+  }
+
+  @Test
+  @DisplayName("관리자 확인 테스트")
+  void isAdmin() {
+    // given - setUp에서 UserRole.USER로 설정됨
+    assertThat(user.isAdmin()).isFalse();
+
+    // when - 관리자 역할로 변경
+    user.changeRole(UserRole.ADMIN);
+
+    // then
+    assertThat(user.isAdmin()).isTrue();
+
+    // when - 다시 일반 사용자로 변경
+    user.changeRole(UserRole.USER);
+
+    // then
+    assertThat(user.isAdmin()).isFalse();
+  }
+
+  @Test
+  @DisplayName("상태 변경 시 null 값 예외 테스트")
+  void changeStatusWithNull() {
+    // when & then
+    assertThatThrownBy(() -> user.changeStatus(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("사용자 상태는 필수입니다.");
+  }
+
+  @Test
+  @DisplayName("역할 변경 시 null 값 예외 테스트")
+  void changeRoleWithNull() {
+    // when & then
+    assertThatThrownBy(() -> user.changeRole(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("사용자 역할은 필수입니다.");
+  }
+
+  @Test
+  @DisplayName("빌더 패턴으로 최소 필드만 설정한 사용자 생성 테스트")
+  void createUserWithMinimalFields() {
+    // given & when
+    User minimalUser = User.builder()
+        .email("minimal@example.com")
+        .password("password123")
+        .name("최소사용자")
+        .nickname("minimal")
+        .phoneNumber("010-0000-0000")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.LOCAL)
+        .build();
+
+    // then
+    assertThat(minimalUser.getEmail()).isEqualTo("minimal@example.com");
+    assertThat(minimalUser.getName()).isEqualTo("최소사용자");
+    assertThat(minimalUser.getNickname()).isEqualTo("minimal");
+    assertThat(minimalUser.getRole()).isEqualTo(UserRole.USER);
+    assertThat(minimalUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
+    assertThat(minimalUser.getSocialProvider()).isEqualTo(SocialProvider.LOCAL);
+    assertThat(minimalUser.isActive()).isTrue();
+    assertThat(minimalUser.isSocialUser()).isFalse();
+    assertThat(minimalUser.isAdmin()).isFalse();
   }
 }

@@ -195,7 +195,7 @@ public class MessageService {
     // 일반 계정인지 확인
     if (user.getSocialProvider() != SocialProvider.LOCAL) {
       log.warn("비밀번호 재설정 실패 - 소셜 로그인 사용자: {}, 제공자: {}", user.getEmail(), user.getSocialProvider());
-      throw new CustomException(ErrorCode.FORBIDDEN, "소셜 로그인 사용자는 비밀번호를 재설정할 수 없습니다.");
+      throw new CustomException(ErrorCode.SOCIAL_LOGIN_NOT_SUPPORTED);
     }
 
     // 사용자 상태 확인

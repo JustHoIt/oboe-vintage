@@ -220,7 +220,7 @@ class UserServiceTest {
         .phoneNumber("01012345678")
         .build();
 
-    when(userRepository.findByNameAndPhoneNumberAndSocialProvider("홍길동", "01012345678"))
+    when(userRepository.findByNameAndPhoneNumber("홍길동", "01012345678"))
         .thenReturn(Optional.of(savedUser));
 
     // when
@@ -231,6 +231,54 @@ class UserServiceTest {
     assertThat(result.getData().getEmail()).isEqualTo("test@example.com");
 
     verify(userRepository, never()).save(any(User.class));
+  }
+
+  @Test
+  @DisplayName("아이디 찾기 실패 - 사용자 없음")
+  void findId_Fail_UserNotFound() {
+    // given
+    FindIdDto dto = FindIdDto.builder()
+        .name("존재하지않는사용자")
+        .phoneNumber("01099999999")
+        .build();
+
+    when(userRepository.findByNameAndPhoneNumber("존재하지않는사용자", "01099999999"))
+        .thenReturn(Optional.empty());
+
+    // when & then
+    assertThatThrownBy(() -> userService.findId(dto))
+        .isInstanceOf(CustomException.class)
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+  }
+
+  @Test
+  @DisplayName("아이디 찾기 실패 - 소셜 로그인 사용자")
+  void findId_Fail_SocialLoginUser() {
+    // given
+    User socialUser = User.builder()
+        .id(1L)
+        .email("social@example.com")
+        .name("홍길동")
+        .phoneNumber("01012345678")
+        .role(UserRole.USER)
+        .status(UserStatus.ACTIVE)
+        .socialProvider(SocialProvider.KAKAO)
+        .socialId("kakao123")
+        .build();
+
+    FindIdDto dto = FindIdDto.builder()
+        .name("홍길동")
+        .phoneNumber("01012345678")
+        .build();
+
+    when(userRepository.findByNameAndPhoneNumber("홍길동", "01012345678"))
+        .thenReturn(Optional.of(socialUser));
+
+    // when & then
+    assertThatThrownBy(() -> userService.findId(dto))
+        .isInstanceOf(CustomException.class)
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SOCIAL_LOGIN_NOT_SUPPORTED)
+        .hasMessageContaining("소셜 로그인 사용자는 해당 기능을 이용할 수 없습니다.");
   }
 
   @Test
@@ -401,7 +449,7 @@ class UserServiceTest {
     // when & then
     assertThatThrownBy(() -> userService.login(socialLoginDto))
         .isInstanceOf(CustomException.class)
-        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PASSWORD);
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SOCIAL_LOGIN_NOT_SUPPORTED);
   }
 
   @Test
@@ -1007,7 +1055,7 @@ class UserServiceTest {
     // when & then
     assertThatThrownBy(() -> userService.withdrawUser(accessToken, withdrawDto))
         .isInstanceOf(CustomException.class)
-        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SOCIAL_LOGIN_NOT_SUPPORTED);
   }
 
   @Test
