@@ -49,6 +49,7 @@ public class Product extends BaseTimeEntity {
   @JoinTable(name = "product_categories",
       joinColumns = @JoinColumn(name = "product_id"),
       inverseJoinColumns = @JoinColumn(name = "category_id"))
+  @Builder.Default
   private Set<ProductCategory> categories = new HashSet<>(); // 카테고리
 
   @Column
@@ -61,6 +62,7 @@ public class Product extends BaseTimeEntity {
   private Integer stockQuantity; // 수량
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Builder.Default
   private List<ProductImage> productImages = new ArrayList<>(); //상품 이미지
 
   @Enumerated(EnumType.STRING)

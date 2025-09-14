@@ -36,7 +36,9 @@ public class ProductImage extends BaseTimeEntity {
   private String imageUrl;
 
   @Column(nullable = false)
+  @Builder.Default
   private Integer sortOrder = 0;
 
-  private boolean thumbnail;
+  @Builder.Default
+  private boolean thumbnail = false;
 }
