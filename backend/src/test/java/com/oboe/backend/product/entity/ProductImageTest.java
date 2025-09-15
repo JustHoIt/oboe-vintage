@@ -1,12 +1,11 @@
 package com.oboe.backend.product.entity;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 @DisplayName("ProductImage Entity 테스트")
 class ProductImageTest {
@@ -41,7 +40,7 @@ class ProductImageTest {
   @DisplayName("ProductImage 기본 생성 테스트")
   void createBasicProductImage() {
     // given & when - setUp에서 생성됨
-    
+
     // then
     assertThat(productImage.getProduct()).isEqualTo(product);
     assertThat(productImage.getImageUrl()).isEqualTo("https://example.com/images/product1.jpg");
@@ -117,7 +116,7 @@ class ProductImageTest {
     assertThat(firstImage.getSortOrder()).isEqualTo(1);
     assertThat(secondImage.getSortOrder()).isEqualTo(2);
     assertThat(thirdImage.getSortOrder()).isEqualTo(3);
-    
+
     // 정렬 순서 비교
     assertThat(firstImage.getSortOrder()).isLessThan(secondImage.getSortOrder());
     assertThat(secondImage.getSortOrder()).isLessThan(thirdImage.getSortOrder());
@@ -162,7 +161,7 @@ class ProductImageTest {
     assertThat(httpImage.getImageUrl()).startsWith("http://");
     assertThat(httpsImage.getImageUrl()).startsWith("https://");
     assertThat(s3Image.getImageUrl()).contains("s3.amazonaws.com");
-    
+
     assertThat(httpImage.getImageUrl()).endsWith(".jpg");
     assertThat(httpsImage.getImageUrl()).endsWith(".png");
     assertThat(s3Image.getImageUrl()).endsWith(".webp");
@@ -173,7 +172,7 @@ class ProductImageTest {
   void testLongImageUrl() {
     // given
     String longUrl = "https://very-long-domain-name-for-testing.example.com/very/long/path/to/images/with/many/subdirectories/and/a/very/long/filename/product-image-with-detailed-description.jpg";
-    
+
     // when
     ProductImage longUrlImage = ProductImage.builder()
         .product(product)
@@ -190,7 +189,7 @@ class ProductImageTest {
   @DisplayName("Product와 ProductImage 연관관계 테스트")
   void testProductImageRelationship() {
     // given & when - setUp의 productImage 사용
-    
+
     // then
     assertThat(productImage.getProduct()).isNotNull();
     assertThat(productImage.getProduct()).isEqualTo(product);
@@ -226,7 +225,7 @@ class ProductImageTest {
     assertThat(image1.getProduct()).isEqualTo(product);
     assertThat(image2.getProduct()).isEqualTo(product);
     assertThat(image3.getProduct()).isEqualTo(product);
-    
+
     // 모든 이미지가 같은 상품을 참조하는지 확인
     assertThat(image1.getProduct()).isEqualTo(image2.getProduct());
     assertThat(image2.getProduct()).isEqualTo(image3.getProduct());
@@ -328,7 +327,7 @@ class ProductImageTest {
     assertThat(thumbnailImage.isThumbnail()).isTrue();
     assertThat(regularImage1.isThumbnail()).isFalse();
     assertThat(regularImage2.isThumbnail()).isFalse();
-    
+
     // 썸네일이 첫 번째 순서인지 확인
     assertThat(thumbnailImage.getSortOrder()).isLessThan(regularImage1.getSortOrder());
     assertThat(thumbnailImage.getSortOrder()).isLessThan(regularImage2.getSortOrder());
@@ -368,7 +367,7 @@ class ProductImageTest {
   @DisplayName("BaseTimeEntity 상속 확인 테스트")
   void testBaseTimeEntityInheritance() {
     // given & when - ProductImage가 BaseTimeEntity를 상속받는지 확인
-    
+
     // then
     assertThat(productImage).isInstanceOf(com.oboe.backend.common.domain.BaseTimeEntity.class);
   }
@@ -378,7 +377,7 @@ class ProductImageTest {
   void testImageUrlLengthLimit() {
     // given
     String url = "https://example.com/image.jpg";
-    
+
     // when
     ProductImage image = ProductImage.builder()
         .product(product)

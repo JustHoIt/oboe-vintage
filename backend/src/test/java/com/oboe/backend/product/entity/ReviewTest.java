@@ -1,16 +1,15 @@
 package com.oboe.backend.product.entity;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
 import com.oboe.backend.user.entity.UserStatus;
+import java.math.BigDecimal;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-
-import static org.assertj.core.api.Assertions.*;
-
-import java.math.BigDecimal;
 
 @DisplayName("Review Entity 테스트")
 class ReviewTest {
@@ -59,7 +58,7 @@ class ReviewTest {
   @DisplayName("Review 기본 생성 테스트")
   void createBasicReview() {
     // given & when - setUp에서 생성됨
-    
+
     // then
     assertThat(review.getProduct()).isEqualTo(product);
     assertThat(review.getUser()).isEqualTo(user);
@@ -133,7 +132,7 @@ class ReviewTest {
           .title("평점 " + rating + "점")
           .content("평점 테스트")
           .build();
-      
+
       // then
       assertThat(validReview.getRating()).isEqualTo(rating);
       assertThat(validReview.getRating()).isBetween(1, 5);
@@ -145,7 +144,7 @@ class ReviewTest {
   void testLongReviewTitle() {
     // given
     String longTitle = "이것은 매우 긴 리뷰 제목입니다. ".repeat(10);
-    
+
     // when
     Review longTitleReview = Review.builder()
         .product(product)
@@ -164,7 +163,7 @@ class ReviewTest {
   void testLongReviewContent() {
     // given
     String longContent = "이 상품에 대한 매우 자세한 리뷰입니다. ".repeat(50);
-    
+
     // when
     Review longContentReview = Review.builder()
         .product(product)
@@ -199,7 +198,7 @@ class ReviewTest {
   @DisplayName("Product와 User 연관관계 테스트")
   void testProductUserRelationship() {
     // given & when - setUp의 review 사용
-    
+
     // then
     assertThat(review.getProduct()).isNotNull();
     assertThat(review.getUser()).isNotNull();
@@ -317,7 +316,7 @@ class ReviewTest {
     assertThat(averageReview.getRating()).isEqualTo(3);
     assertThat(poorReview.getRating()).isEqualTo(2);
     assertThat(badReview.getRating()).isEqualTo(1);
-    
+
     // 모든 평점이 유효 범위 내에 있는지 확인
     assertThat(excellentReview.getRating()).isBetween(1, 5);
     assertThat(goodReview.getRating()).isBetween(1, 5);
@@ -349,7 +348,7 @@ class ReviewTest {
   @DisplayName("BaseTimeEntity 상속 확인 테스트")
   void testBaseTimeEntityInheritance() {
     // given & when - Review가 BaseTimeEntity를 상속받는지 확인
-    
+
     // then
     assertThat(review).isInstanceOf(com.oboe.backend.common.domain.BaseTimeEntity.class);
   }

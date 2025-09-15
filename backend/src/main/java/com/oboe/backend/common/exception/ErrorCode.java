@@ -26,6 +26,25 @@ public enum ErrorCode {
   SOCIAL_LOGIN_NOT_SUPPORTED(HttpStatus.FORBIDDEN, "소셜 로그인 사용자는 해당 기능을 이용할 수 없습니다."),
   USER_ALREADY_WITHDRAWN(HttpStatus.FORBIDDEN, "이미 탈퇴된 계정입니다."),
   USER_SUSPENDED(HttpStatus.FORBIDDEN, "정지된 계정입니다."),
+  NOT_MATCH_USER(HttpStatus.BAD_REQUEST, "작성자와 요청자의 계정이 일치하지 않습니다."),
+
+  // 상품 관련 오류
+  PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
+  PRODUCT_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 상품입니다."),
+  PRODUCT_SKU_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 SKU입니다."),
+  PRODUCT_INACTIVE(HttpStatus.BAD_REQUEST, "비활성화된 상품입니다."),
+  PRODUCT_OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "재고가 부족한 상품입니다."),
+  PRODUCT_INVALID_PRICE(HttpStatus.BAD_REQUEST, "상품 가격이 올바르지 않습니다."),
+  PRODUCT_INVALID_STOCK(HttpStatus.BAD_REQUEST, "재고 수량이 올바르지 않습니다."),
+  
+  // 카테고리 관련 오류
+  CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "카테고리를 찾을 수 없습니다."),
+  CATEGORY_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 카테고리입니다."),
+  CATEGORY_HAS_PRODUCTS(HttpStatus.BAD_REQUEST, "상품이 존재하는 카테고리는 삭제할 수 없습니다."),
+  
+  // 상품 이미지 관련 오류
+  PRODUCT_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "상품 이미지를 찾을 수 없습니다."),
+  PRODUCT_IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "상품 이미지 등록 개수를 초과했습니다."),
 
 
   // 파일 관련 오류
