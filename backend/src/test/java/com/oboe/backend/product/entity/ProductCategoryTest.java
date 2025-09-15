@@ -1,12 +1,11 @@
 package com.oboe.backend.product.entity;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 @DisplayName("ProductCategory Entity 테스트")
 class ProductCategoryTest {
@@ -51,7 +50,7 @@ class ProductCategoryTest {
   @DisplayName("ProductCategory 기본 생성 테스트")
   void createBasicProductCategory() {
     // given & when - setUp에서 생성됨
-    
+
     // then
     assertThat(parentCategory.getName()).isEqualTo("상의");
     assertThat(parentCategory.getLevel()).isEqualTo(1);
@@ -77,7 +76,7 @@ class ProductCategoryTest {
     // given
     parentCategory.getChildren().add(childCategory);
     childCategory.getChildren().add(grandChildCategory);
-    
+
     // when & then
     assertThat(parentCategory.hasChildren()).isTrue();
     assertThat(childCategory.hasChildren()).isTrue();
@@ -88,7 +87,7 @@ class ProductCategoryTest {
   @DisplayName("빈 자식 카테고리 리스트 테스트")
   void hasNoChildren() {
     // given & when - setUp에서 빈 children 리스트로 생성
-    
+
     // then
     assertThat(parentCategory.hasChildren()).isFalse();
     assertThat(childCategory.hasChildren()).isFalse();
@@ -101,15 +100,15 @@ class ProductCategoryTest {
     // given
     parentCategory.getChildren().add(childCategory);
     childCategory.getChildren().add(grandChildCategory);
-    
+
     // then - 부모-자식 관계 확인
     assertThat(childCategory.getParent()).isEqualTo(parentCategory);
     assertThat(grandChildCategory.getParent()).isEqualTo(childCategory);
-    
+
     // 자식 리스트 확인
     assertThat(parentCategory.getChildren()).contains(childCategory);
     assertThat(childCategory.getChildren()).contains(grandChildCategory);
-    
+
     // 레벨 확인
     assertThat(parentCategory.getLevel()).isEqualTo(1);
     assertThat(childCategory.getLevel()).isEqualTo(2);
@@ -144,7 +143,7 @@ class ProductCategoryTest {
     assertThat(level1.getLevel()).isEqualTo(1);
     assertThat(level2.getLevel()).isEqualTo(2);
     assertThat(level3.getLevel()).isEqualTo(3);
-    
+
     assertThat(level1.isRootCategory()).isTrue();
     assertThat(level2.isRootCategory()).isFalse();
     assertThat(level3.isRootCategory()).isFalse();
@@ -250,10 +249,10 @@ class ProductCategoryTest {
     assertThat(parentCategory.getChildren()).hasSize(1);
     assertThat(childCategory.getChildren()).hasSize(2);
     assertThat(childCategory.getChildren()).contains(dressShirt, casualShirt);
-    
+
     assertThat(dressShirt.getParent()).isEqualTo(childCategory);
     assertThat(casualShirt.getParent()).isEqualTo(childCategory);
-    
+
     assertThat(dressShirt.getSortOrder()).isEqualTo(1);
     assertThat(casualShirt.getSortOrder()).isEqualTo(2);
   }
@@ -284,7 +283,7 @@ class ProductCategoryTest {
     assertThat(tops.isRootCategory()).isTrue();
     assertThat(bottoms.isRootCategory()).isTrue();
     assertThat(shoes.isRootCategory()).isTrue();
-    
+
     assertThat(tops.getLevel()).isEqualTo(1);
     assertThat(bottoms.getLevel()).isEqualTo(1);
     assertThat(shoes.getLevel()).isEqualTo(1);
@@ -296,7 +295,7 @@ class ProductCategoryTest {
     // given
     String shortName = "짧은이름";
     String longName = "이것은 매우 긴 카테고리 이름입니다. 100자를 넘지 않도록 주의해야 합니다.";
-    
+
     // when
     ProductCategory shortCategory = ProductCategory.builder()
         .name(shortName)
@@ -347,12 +346,12 @@ class ProductCategoryTest {
     // then
     assertThat(parentCategory.getChildren()).hasSize(3);
     assertThat(parentCategory.getChildren()).contains(shirt, tshirt, outer);
-    
+
     // 모든 자식들이 같은 부모를 가지는지 확인
     assertThat(shirt.getParent()).isEqualTo(parentCategory);
     assertThat(tshirt.getParent()).isEqualTo(parentCategory);
     assertThat(outer.getParent()).isEqualTo(parentCategory);
-    
+
     // 모든 자식들이 같은 레벨인지 확인
     assertThat(shirt.getLevel()).isEqualTo(2);
     assertThat(tshirt.getLevel()).isEqualTo(2);
@@ -363,7 +362,7 @@ class ProductCategoryTest {
   @DisplayName("BaseTimeEntity 상속 확인 테스트")
   void testBaseTimeEntityInheritance() {
     // given & when - ProductCategory가 BaseTimeEntity를 상속받는지 확인
-    
+
     // then
     assertThat(parentCategory).isInstanceOf(com.oboe.backend.common.domain.BaseTimeEntity.class);
   }

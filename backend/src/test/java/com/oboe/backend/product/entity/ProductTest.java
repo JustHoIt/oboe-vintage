@@ -1,15 +1,13 @@
 package com.oboe.backend.product.entity;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 @DisplayName("Product Entity 테스트")
 class ProductTest {
@@ -27,7 +25,7 @@ class ProductTest {
         .sortOrder(1)
         .description("상의 카테고리")
         .build();
-        
+
     category2 = ProductCategory.builder()
         .name("셔츠")
         .level(2)
@@ -56,7 +54,7 @@ class ProductTest {
   @DisplayName("Product 기본 생성 테스트")
   void createProduct() {
     // given & when
-    
+
     // then
     assertThat(product.getName()).isEqualTo("빈티지 데님 셔츠");
     assertThat(product.getDescription()).isEqualTo("1980년대 빈티지 데님 셔츠입니다.");
@@ -91,7 +89,7 @@ class ProductTest {
     assertThat(minimalProduct.getStockQuantity()).isEqualTo(10);
     assertThat(minimalProduct.getProductStatus()).isEqualTo(ProductStatus.ACTIVE);
     assertThat(minimalProduct.getViews()).isEqualTo(0);
-    
+
     // 선택 필드들은 null이어야 함
     assertThat(minimalProduct.getSku()).isNull();
     assertThat(minimalProduct.getBrand()).isNull();
@@ -106,10 +104,10 @@ class ProductTest {
   void increaseViews() {
     // given
     int initialViews = product.getViews();
-    
+
     // when
     product.increaseViews();
-    
+
     // then
     assertThat(product.getViews()).isEqualTo(initialViews + 1);
   }
@@ -119,12 +117,12 @@ class ProductTest {
   void increaseViewsMultipleTimes() {
     // given
     int initialViews = product.getViews();
-    
+
     // when
     product.increaseViews();
     product.increaseViews();
     product.increaseViews();
-    
+
     // then
     assertThat(product.getViews()).isEqualTo(initialViews + 3);
   }
@@ -153,7 +151,7 @@ class ProductTest {
     Set<ProductCategory> categories = new HashSet<>();
     categories.add(category1);
     categories.add(category2);
-    
+
     // when
     Product productWithCategories = Product.builder()
         .name("카테고리 테스트 상품")
@@ -164,7 +162,7 @@ class ProductTest {
         .categories(categories)
         .views(0)
         .build();
-    
+
     // then
     assertThat(productWithCategories.getCategories()).hasSize(2);
     assertThat(productWithCategories.getCategories()).contains(category1, category2);
@@ -178,7 +176,7 @@ class ProductTest {
     categories.add(category1);
     categories.add(category1); // 중복 추가
     categories.add(category2);
-    
+
     // when
     Product productWithCategories = Product.builder()
         .name("중복 카테고리 테스트")
@@ -189,7 +187,7 @@ class ProductTest {
         .categories(categories)
         .views(0)
         .build();
-    
+
     // then - Set이므로 중복 제거되어 2개만 있어야 함
     assertThat(productWithCategories.getCategories()).hasSize(2);
     assertThat(productWithCategories.getCategories()).contains(category1, category2);
@@ -199,7 +197,7 @@ class ProductTest {
   @DisplayName("빈 카테고리 Set 테스트")
   void emptyCategoriesSet() {
     // given & when - setUp의 product는 categories가 빈 Set
-    
+
     // then
     assertThat(product.getCategories()).isNotNull();
     assertThat(product.getCategories()).isEmpty();
@@ -209,7 +207,7 @@ class ProductTest {
   @DisplayName("빈 ProductImages List 테스트")
   void emptyProductImagesList() {
     // given & when - setUp의 product는 productImages가 빈 List
-    
+
     // then
     assertThat(product.getProductImages()).isNotNull();
     assertThat(product.getProductImages()).isEmpty();
@@ -355,7 +353,7 @@ class ProductTest {
   @DisplayName("상품 상세 정보 필드 테스트")
   void testDetailFields() {
     // given & when - setUp의 product 사용
-    
+
     // then
     assertThat(product.getBrand()).isEqualTo("리바이스");
     assertThat(product.getYearOfRelease()).isEqualTo("1985");
@@ -403,7 +401,7 @@ class ProductTest {
   void testLongProductName() {
     // given
     String longName = "이것은 매우 긴 상품명입니다. ".repeat(10); // 200자 근처
-    
+
     // when
     Product longNameProduct = Product.builder()
         .name(longName)
@@ -423,7 +421,7 @@ class ProductTest {
   @DisplayName("BaseTimeEntity 상속 확인 테스트")
   void testBaseTimeEntityInheritance() {
     // given & when - Product가 BaseTimeEntity를 상속받는지 확인
-    
+
     // then - Product는 BaseTimeEntity의 메서드들을 가져야 함
     assertThat(product).isInstanceOf(com.oboe.backend.common.domain.BaseTimeEntity.class);
   }

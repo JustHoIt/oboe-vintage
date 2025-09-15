@@ -70,7 +70,6 @@ public class ProductCategory extends BaseTimeEntity {
    *   5. 악세서리 (level=1)
    */
 
-
   @Column(nullable = false)
   @Builder.Default
   private Integer level = 1; // 1:대분류, 2:중분류, 3:소분류
@@ -81,11 +80,20 @@ public class ProductCategory extends BaseTimeEntity {
 
   private String description; // 카테고리 설명
 
-  // 비즈니스 메서드
+  /**
+   * 최상위 카테고리 여부 확인
+   *
+   * @return 최상위 카테고리면 true
+   */
   public boolean isRootCategory() {
     return parent == null;
   }
 
+  /**
+   * 하위 카테고리 존재 여부 확인
+   *
+   * @return 하위 카테고리가 있으면 true
+   */
   public boolean hasChildren() {
     return !children.isEmpty();
   }
