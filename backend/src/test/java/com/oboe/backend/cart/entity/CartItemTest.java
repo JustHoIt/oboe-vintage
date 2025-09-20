@@ -27,55 +27,27 @@ class CartItemTest {
   @BeforeEach
   void setUp() {
     // 테스트용 사용자 생성
-    user = User.builder()
-        .email("test@example.com")
-        .password("password123")
-        .name("홍길동")
-        .nickname("hong123")
-        .phoneNumber("010-1234-5678")
-        .role(UserRole.USER)
-        .status(UserStatus.ACTIVE)
-        .socialProvider(SocialProvider.LOCAL)
-        .build();
+    user = User.builder().email("test@example.com").password("password123").name("홍길동")
+        .nickname("hong123").phoneNumber("010-1234-5678").role(UserRole.USER)
+        .status(UserStatus.ACTIVE).socialProvider(SocialProvider.LOCAL).build();
 
     // 테스트용 상품 생성 (ID를 수동으로 설정)
-    product1 = Product.builder()
-        .name("빈티지 데님 셔츠")
-        .description("1980년대 빈티지 데님 셔츠")
-        .price(new BigDecimal("150000"))
-        .stockQuantity(5)
-        .productStatus(ProductStatus.ACTIVE)
-        .brand("리바이스")
-        .condition(Condition.VERY_GOOD)
-        .build();
+    product1 = Product.builder().name("빈티지 데님 셔츠").description("1980년대 빈티지 데님 셔츠")
+        .price(new BigDecimal("150000")).stockQuantity(5).productStatus(ProductStatus.ACTIVE)
+        .brand("리바이스").condition(Condition.VERY_GOOD).build();
     product1 = setIdForTest(product1, 1L); // 테스트용 ID 설정
 
-    product2 = Product.builder()
-        .name("빈티지 청바지")
-        .description("1990년대 빈티지 청바지")
-        .price(new BigDecimal("200000"))
-        .stockQuantity(3)
-        .productStatus(ProductStatus.ACTIVE)
-        .brand("리바이스")
-        .condition(Condition.EXCELLENT)
-        .build();
+    product2 = Product.builder().name("빈티지 청바지").description("1990년대 빈티지 청바지")
+        .price(new BigDecimal("200000")).stockQuantity(3).productStatus(ProductStatus.ACTIVE)
+        .brand("리바이스").condition(Condition.EXCELLENT).build();
     product2 = setIdForTest(product2, 2L); // 테스트용 ID 설정
 
     // 기본 테스트용 장바구니 생성
-    cart = Cart.builder()
-        .user(user)
-        .totalItems(0)
-        .totalPrice(BigDecimal.ZERO)
-        .isActive(true)
-        .build();
+    cart = Cart.builder().user(user).totalItems(0).totalPrice(BigDecimal.ZERO).build();
 
     // 기본 테스트용 장바구니 아이템 생성
-    cartItem = CartItem.builder()
-        .product(product1)
-        .quantity(2)
-        .unitPrice(product1.getPrice())
-        .totalPrice(product1.getPrice().multiply(BigDecimal.valueOf(2)))
-        .build();
+    cartItem = CartItem.builder().product(product1).quantity(2).unitPrice(product1.getPrice())
+        .totalPrice(product1.getPrice().multiply(BigDecimal.valueOf(2))).build();
   }
 
   // 테스트용 ID 설정을 위한 헬퍼 메서드
@@ -94,18 +66,16 @@ class CartItemTest {
   @DisplayName("CartItem 기본 생성 테스트")
   void createCartItem() {
     // given & when
-    CartItem newCartItem = CartItem.builder()
-        .product(product1)
-        .quantity(3)
+    CartItem newCartItem = CartItem.builder().product(product1).quantity(3)
         .unitPrice(product1.getPrice())
-        .totalPrice(product1.getPrice().multiply(BigDecimal.valueOf(3)))
-        .build();
+        .totalPrice(product1.getPrice().multiply(BigDecimal.valueOf(3))).build();
 
     // then
     assertThat(newCartItem.getProduct()).isEqualTo(product1);
     assertThat(newCartItem.getQuantity()).isEqualTo(3);
     assertThat(newCartItem.getUnitPrice()).isEqualByComparingTo(product1.getPrice());
-    assertThat(newCartItem.getTotalPrice()).isEqualByComparingTo(new BigDecimal("450000")); // 150000 * 3
+    assertThat(newCartItem.getTotalPrice()).isEqualByComparingTo(
+        new BigDecimal("450000")); // 150000 * 3
   }
 
   @Test
@@ -119,24 +89,22 @@ class CartItemTest {
 
     // then
     assertThat(cartItem.getQuantity()).isEqualTo(5); // 2 + 3
-    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(new BigDecimal("750000")); // 150000 * 5
+    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(
+        new BigDecimal("750000")); // 150000 * 5
   }
 
   @Test
   @DisplayName("수량 증가 테스트 - 잘못된 수량")
   void increaseQuantity_InvalidQuantity() {
     // given & when & then
-    assertThatThrownBy(() -> cartItem.increaseQuantity(0))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("추가할 수량은 0보다 커야 합니다");
+    assertThatThrownBy(() -> cartItem.increaseQuantity(0)).isInstanceOf(
+        IllegalArgumentException.class).hasMessageContaining("추가할 수량은 0보다 커야 합니다");
 
-    assertThatThrownBy(() -> cartItem.increaseQuantity(-1))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("추가할 수량은 0보다 커야 합니다");
+    assertThatThrownBy(() -> cartItem.increaseQuantity(-1)).isInstanceOf(
+        IllegalArgumentException.class).hasMessageContaining("추가할 수량은 0보다 커야 합니다");
 
-    assertThatThrownBy(() -> cartItem.increaseQuantity(null))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("추가할 수량은 0보다 커야 합니다");
+    assertThatThrownBy(() -> cartItem.increaseQuantity(null)).isInstanceOf(
+        IllegalArgumentException.class).hasMessageContaining("추가할 수량은 0보다 커야 합니다");
   }
 
   @Test
@@ -150,24 +118,22 @@ class CartItemTest {
 
     // then
     assertThat(cartItem.getQuantity()).isEqualTo(1); // 2 - 1
-    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(new BigDecimal("150000")); // 150000 * 1
+    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(
+        new BigDecimal("150000")); // 150000 * 1
   }
 
   @Test
   @DisplayName("수량 감소 테스트 - 잘못된 수량")
   void decreaseQuantity_InvalidQuantity() {
     // given & when & then
-    assertThatThrownBy(() -> cartItem.decreaseQuantity(0))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("감소할 수량은 0보다 커야 합니다");
+    assertThatThrownBy(() -> cartItem.decreaseQuantity(0)).isInstanceOf(
+        IllegalArgumentException.class).hasMessageContaining("감소할 수량은 0보다 커야 합니다");
 
-    assertThatThrownBy(() -> cartItem.decreaseQuantity(-1))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("감소할 수량은 0보다 커야 합니다");
+    assertThatThrownBy(() -> cartItem.decreaseQuantity(-1)).isInstanceOf(
+        IllegalArgumentException.class).hasMessageContaining("감소할 수량은 0보다 커야 합니다");
 
-    assertThatThrownBy(() -> cartItem.decreaseQuantity(null))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("감소할 수량은 0보다 커야 합니다");
+    assertThatThrownBy(() -> cartItem.decreaseQuantity(null)).isInstanceOf(
+        IllegalArgumentException.class).hasMessageContaining("감소할 수량은 0보다 커야 합니다");
   }
 
   @Test
@@ -177,9 +143,8 @@ class CartItemTest {
     Integer decreaseQuantity = 5; // 현재 수량은 2
 
     // when & then
-    assertThatThrownBy(() -> cartItem.decreaseQuantity(decreaseQuantity))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("수량이 부족합니다");
+    assertThatThrownBy(() -> cartItem.decreaseQuantity(decreaseQuantity)).isInstanceOf(
+        IllegalArgumentException.class).hasMessageContaining("수량이 부족합니다");
   }
 
   @Test
@@ -193,24 +158,22 @@ class CartItemTest {
 
     // then
     assertThat(cartItem.getQuantity()).isEqualTo(5);
-    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(new BigDecimal("750000")); // 150000 * 5
+    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(
+        new BigDecimal("750000")); // 150000 * 5
   }
 
   @Test
   @DisplayName("수량 설정 테스트 - 잘못된 수량")
   void setQuantity_InvalidQuantity() {
     // given & when & then
-    assertThatThrownBy(() -> cartItem.setQuantity(0))
-        .isInstanceOf(IllegalArgumentException.class)
+    assertThatThrownBy(() -> cartItem.setQuantity(0)).isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("수량은 0보다 커야 합니다");
 
-    assertThatThrownBy(() -> cartItem.setQuantity(-1))
-        .isInstanceOf(IllegalArgumentException.class)
+    assertThatThrownBy(() -> cartItem.setQuantity(-1)).isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("수량은 0보다 커야 합니다");
 
-    assertThatThrownBy(() -> cartItem.setQuantity(null))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("수량은 0보다 커야 합니다");
+    assertThatThrownBy(() -> cartItem.setQuantity(null)).isInstanceOf(
+        IllegalArgumentException.class).hasMessageContaining("수량은 0보다 커야 합니다");
   }
 
   @Test
@@ -224,20 +187,19 @@ class CartItemTest {
 
     // then
     assertThat(cartItem.getUnitPrice()).isEqualByComparingTo(newUnitPrice);
-    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(new BigDecimal("360000")); // 180000 * 2
+    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(
+        new BigDecimal("360000")); // 180000 * 2
   }
 
   @Test
   @DisplayName("단위 가격 설정 테스트 - 잘못된 가격")
   void setUnitPrice_InvalidPrice() {
     // given & when & then
-    assertThatThrownBy(() -> cartItem.setUnitPrice(BigDecimal.valueOf(-1)))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("단위 가격은 0 이상이어야 합니다");
+    assertThatThrownBy(() -> cartItem.setUnitPrice(BigDecimal.valueOf(-1))).isInstanceOf(
+        IllegalArgumentException.class).hasMessageContaining("단위 가격은 0 이상이어야 합니다");
 
-    assertThatThrownBy(() -> cartItem.setUnitPrice(null))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("단위 가격은 0 이상이어야 합니다");
+    assertThatThrownBy(() -> cartItem.setUnitPrice(null)).isInstanceOf(
+        IllegalArgumentException.class).hasMessageContaining("단위 가격은 0 이상이어야 합니다");
   }
 
   @Test
@@ -251,7 +213,8 @@ class CartItemTest {
 
     // then
     assertThat(cartItem.getUnitPrice()).isEqualByComparingTo(product1.getPrice()); // 150000
-    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(new BigDecimal("300000")); // 150000 * 2
+    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(
+        new BigDecimal("300000")); // 150000 * 2
   }
 
   @Test
@@ -463,14 +426,17 @@ class CartItemTest {
     cartItem.setQuantity(5);
 
     // when & then
-    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(new BigDecimal("500000")); // 100000 * 5
+    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(
+        new BigDecimal("500000")); // 100000 * 5
 
     // 수량 변경 시 자동 재계산
     cartItem.setQuantity(3);
-    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(new BigDecimal("300000")); // 100000 * 3
+    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(
+        new BigDecimal("300000")); // 100000 * 3
 
     // 단위 가격 변경 시 자동 재계산
     cartItem.setUnitPrice(new BigDecimal("150000"));
-    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(new BigDecimal("450000")); // 150000 * 3
+    assertThat(cartItem.getTotalPrice()).isEqualByComparingTo(
+        new BigDecimal("450000")); // 150000 * 3
   }
 }

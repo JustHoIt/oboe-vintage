@@ -60,7 +60,17 @@ public enum ErrorCode {
   SMS_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST, "인증번호가 일치하지 않습니다."),
   SMS_VERIFICATION_REQUIRED(HttpStatus.BAD_REQUEST, "SMS 인증이 필요합니다."),
   SMS_QUOTA_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "SMS 발송 한도를 초과했습니다."),
-  SMS_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "SMS 서비스를 사용할 수 없습니다.");
+  SMS_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "SMS 서비스를 사용할 수 없습니다."),
+
+  // 장바구니 관련 오류
+  CART_NOT_FOUND(HttpStatus.NOT_FOUND, "장바구니를 찾을 수 없습니다."),
+  CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "장바구니 아이템을 찾을 수 없습니다."),
+  CART_ACCESS_DENIED(HttpStatus.FORBIDDEN, "장바구니에 접근할 권한이 없습니다."),
+  CART_ITEM_QUANTITY_INVALID(HttpStatus.BAD_REQUEST, "장바구니 아이템 수량이 올바르지 않습니다."),
+  CART_EMPTY(HttpStatus.BAD_REQUEST, "장바구니가 비어있습니다."),
+  CART_PRODUCT_UNAVAILABLE(HttpStatus.CONFLICT, "현재 판매 중인 상품이 아닙니다."),
+  CART_INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "재고가 부족합니다."),
+  CART_PRICE_CHANGED(HttpStatus.CONFLICT, "상품 가격이 변경되었습니다.");
 
   private final HttpStatus httpStatus;
   private final String message;

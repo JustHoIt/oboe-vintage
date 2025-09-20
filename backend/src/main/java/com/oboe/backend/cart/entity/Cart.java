@@ -51,9 +51,6 @@ public class Cart extends BaseTimeEntity {
   @Builder.Default
   private BigDecimal totalPrice = BigDecimal.ZERO; // 총 금액
 
-  @Column(nullable = false)
-  @Builder.Default
-  private Boolean isActive = true; // 장바구니 활성화 여부
 
   // ==============================
   // 도메인 비즈니스 메서드들
@@ -65,7 +62,7 @@ public class Cart extends BaseTimeEntity {
   public void addCartItem(CartItem cartItem) {
     // 이미 같은 상품이 있는지 확인
     CartItem existingItem = findCartItemByProduct(cartItem.getProduct().getId());
-    
+
     if (existingItem != null) {
       // 기존 상품이 있으면 수량 증가
       existingItem.increaseQuantity(cartItem.getQuantity());
@@ -74,7 +71,7 @@ public class Cart extends BaseTimeEntity {
       cartItems.add(cartItem);
       cartItem.setCart(this);
     }
-    
+
     recalculateTotals();
   }
 
@@ -114,11 +111,11 @@ public class Cart extends BaseTimeEntity {
   /**
    * 총 개수와 총 금액 재계산
    */
-  private void recalculateTotals() {
+  public void recalculateTotals() {
     this.totalItems = cartItems.stream()
         .mapToInt(CartItem::getQuantity)
         .sum();
-    
+
     this.totalPrice = cartItems.stream()
         .map(CartItem::getTotalPrice)
         .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -132,19 +129,6 @@ public class Cart extends BaseTimeEntity {
     recalculateTotals();
   }
 
-  /**
-   * 장바구니 비활성화
-   */
-  public void deactivate() {
-    this.isActive = false;
-  }
-
-  /**
-   * 장바구니 활성화
-   */
-  public void activate() {
-    this.isActive = true;
-  }
 
   /**
    * 장바구니가 비어있는지 확인
@@ -176,9 +160,9 @@ public class Cart extends BaseTimeEntity {
   }
 
   /**
-   * 주문 가능 여부 확인 (장바구니가 비어있지 않고 활성화되어 있어야 함)
+   * 주문 가능 여부 확인 (장바구니가 비어있지 않아야 함)
    */
   public boolean canPlaceOrder() {
-    return isActive && !isEmpty();
+    return !isEmpty();
   }
 }

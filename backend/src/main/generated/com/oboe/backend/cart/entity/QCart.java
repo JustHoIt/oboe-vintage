@@ -31,8 +31,6 @@ public class QCart extends EntityPathBase<Cart> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final BooleanPath isActive = createBoolean("isActive");
-
     public final NumberPath<Integer> totalItems = createNumber("totalItems", Integer.class);
 
     public final NumberPath<java.math.BigDecimal> totalPrice = createNumber("totalPrice", java.math.BigDecimal.class);

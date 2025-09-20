@@ -14,29 +14,24 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
   /**
    * 사용자 ID로 장바구니 조회
    */
-  @Query("SELECT c FROM Cart c WHERE c.user.id = :userId AND c.isActive = true")
-  Optional<Cart> findByUserIdAndActive(@Param("userId") Long userId);
+  @Query("SELECT c FROM Cart c WHERE c.user.id = :userId")
+  Optional<Cart> findByUserId(@Param("userId") Long userId);
 
   /**
    * 사용자로 장바구니 조회
    */
-  Optional<Cart> findByUserAndIsActiveTrue(User user);
+  Optional<Cart> findByUser(User user);
 
   /**
-   * 사용자의 활성 장바구니 존재 여부 확인
+   * 사용자의 장바구니 존재 여부 확인
    */
-  boolean existsByUserAndIsActiveTrue(User user);
+  boolean existsByUser(User user);
 
   /**
-   * 사용자 ID로 활성 장바구니 존재 여부 확인
+   * 사용자 ID로 장바구니 존재 여부 확인
    */
-  @Query("SELECT COUNT(c) > 0 FROM Cart c WHERE c.user.id = :userId AND c.isActive = true")
-  boolean existsByUserIdAndActive(@Param("userId") Long userId);
-
-  /**
-   * 비활성 장바구니들 삭제 (사용자 탈퇴 시 등)
-   */
-  void deleteByUserAndIsActiveFalse(User user);
+  @Query("SELECT COUNT(c) > 0 FROM Cart c WHERE c.user.id = :userId")
+  boolean existsByUserId(@Param("userId") Long userId);
 
   /**
    * 사용자의 모든 장바구니 삭제
