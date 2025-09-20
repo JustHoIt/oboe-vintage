@@ -1,0 +1,3 @@
+# Test Auto Configuration
+org.springframework.boot.test.autoconfigure.OverrideAutoConfiguration=\
+com.oboe.backend.config.TestConfig

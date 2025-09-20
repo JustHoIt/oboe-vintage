@@ -1,7 +1,6 @@
 package com.oboe.backend.cart.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.oboe.backend.product.entity.Condition;
 import com.oboe.backend.product.entity.Product;
@@ -11,8 +10,6 @@ import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
 import com.oboe.backend.user.entity.UserStatus;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,7 +64,6 @@ class CartTest {
         .user(user)
         .totalItems(0)
         .totalPrice(BigDecimal.ZERO)
-        .isActive(true)
         .build();
   }
 
@@ -91,14 +87,12 @@ class CartTest {
         .user(user)
         .totalItems(0)
         .totalPrice(BigDecimal.ZERO)
-        .isActive(true)
         .build();
 
     // then
     assertThat(newCart.getUser()).isEqualTo(user);
     assertThat(newCart.getTotalItems()).isEqualTo(0);
     assertThat(newCart.getTotalPrice()).isEqualByComparingTo(BigDecimal.ZERO);
-    assertThat(newCart.getIsActive()).isTrue();
     assertThat(newCart.getCartItems()).isEmpty();
   }
 
@@ -264,26 +258,19 @@ class CartTest {
   }
 
   @Test
-  @DisplayName("장바구니 비활성화 테스트")
-  void deactivate() {
-    // given & when
-    cart.deactivate();
+  @DisplayName("장바구니 비우기 테스트")
+  void clearCart() {
+    // given - 상품 추가
+    cart.addCartItem(createCartItem(product1, 2));
+    assertThat(cart.getTotalItems()).isEqualTo(2);
 
-    // then
-    assertThat(cart.getIsActive()).isFalse();
-  }
+    // when - 장바구니 비우기
+    cart.clear();
 
-  @Test
-  @DisplayName("장바구니 활성화 테스트")
-  void activate() {
-    // given
-    cart.deactivate();
-
-    // when
-    cart.activate();
-
-    // then
-    assertThat(cart.getIsActive()).isTrue();
+    // then - 장바구니가 비워짐
+    assertThat(cart.isEmpty()).isTrue();
+    assertThat(cart.getTotalItems()).isEqualTo(0);
+    assertThat(cart.getTotalPrice()).isEqualByComparingTo(BigDecimal.ZERO);
   }
 
   @Test
@@ -404,23 +391,6 @@ class CartTest {
   }
 
   @Test
-  @DisplayName("주문 가능 여부 확인 테스트 - 장바구니 비활성화")
-  void canPlaceOrder_InactiveCart() {
-    // given
-    CartItem cartItem = CartItem.builder()
-        .product(product1)
-        .quantity(1)
-        .unitPrice(product1.getPrice())
-        .totalPrice(product1.getPrice())
-        .build();
-    cart.addCartItem(cartItem);
-    cart.deactivate();
-
-    // when & then
-    assertThat(cart.canPlaceOrder()).isFalse();
-  }
-
-  @Test
   @DisplayName("다양한 상품이 포함된 장바구니 총액 계산 테스트")
   void calculateTotalPrice_MultipleProducts() {
     // given
@@ -461,10 +431,19 @@ class CartTest {
     assertThat(cart.getUser()).isEqualTo(user);
     assertThat(cart.getTotalItems()).isEqualTo(0);
     assertThat(cart.getTotalPrice()).isEqualByComparingTo(BigDecimal.ZERO);
-    assertThat(cart.getIsActive()).isTrue();
     assertThat(cart.getCartItems()).isEmpty();
     assertThat(cart.isEmpty()).isTrue();
     assertThat(cart.getItemCount()).isEqualTo(0);
     assertThat(cart.canPlaceOrder()).isFalse();
+  }
+
+  private CartItem createCartItem(Product product, int quantity) {
+    return CartItem.builder()
+        .cart(cart)
+        .product(product)
+        .quantity(quantity)
+        .unitPrice(product.getPrice())
+        .totalPrice(product.getPrice().multiply(BigDecimal.valueOf(quantity)))
+        .build();
   }
 }

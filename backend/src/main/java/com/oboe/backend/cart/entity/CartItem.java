@@ -60,7 +60,7 @@ public class CartItem extends BaseTimeEntity {
     if (additionalQuantity == null || additionalQuantity <= 0) {
       throw new IllegalArgumentException("추가할 수량은 0보다 커야 합니다.");
     }
-    
+
     this.quantity += additionalQuantity;
     calculateTotalPrice();
   }
@@ -72,11 +72,11 @@ public class CartItem extends BaseTimeEntity {
     if (decreaseQuantity == null || decreaseQuantity <= 0) {
       throw new IllegalArgumentException("감소할 수량은 0보다 커야 합니다.");
     }
-    
+
     if (this.quantity <= decreaseQuantity) {
       throw new IllegalArgumentException("수량이 부족합니다. 현재 수량: " + this.quantity);
     }
-    
+
     this.quantity -= decreaseQuantity;
     calculateTotalPrice();
   }
@@ -88,7 +88,7 @@ public class CartItem extends BaseTimeEntity {
     if (quantity == null || quantity <= 0) {
       throw new IllegalArgumentException("수량은 0보다 커야 합니다.");
     }
-    
+
     this.quantity = quantity;
     calculateTotalPrice();
   }
@@ -109,7 +109,7 @@ public class CartItem extends BaseTimeEntity {
     if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) < 0) {
       throw new IllegalArgumentException("단위 가격은 0 이상이어야 합니다.");
     }
-    
+
     this.unitPrice = unitPrice;
     calculateTotalPrice();
   }
@@ -135,16 +135,16 @@ public class CartItem extends BaseTimeEntity {
    * 상품 재고 확인
    */
   public boolean isStockAvailable() {
-    return product != null && product.getStockQuantity() != null && 
-           product.getStockQuantity() >= quantity;
+    return product != null && product.getStockQuantity() != null &&
+        product.getStockQuantity() >= quantity;
   }
 
   /**
    * 상품이 판매 중인지 확인
    */
   public boolean isProductAvailable() {
-    return product != null && product.getProductStatus() != null && 
-           product.getProductStatus().isAvailable();
+    return product != null && product.getProductStatus() != null &&
+        product.getProductStatus().isAvailable();
   }
 
   /**
@@ -161,7 +161,7 @@ public class CartItem extends BaseTimeEntity {
     if (product == null || product.getPrice() == null || unitPrice == null) {
       return false;
     }
-    
+
     return !product.getPrice().equals(unitPrice);
   }
 
@@ -172,14 +172,14 @@ public class CartItem extends BaseTimeEntity {
     if (!isPriceChanged()) {
       return null;
     }
-    
+
     BigDecimal currentPrice = product.getPrice();
     if (currentPrice.compareTo(unitPrice) > 0) {
-      return String.format("상품 가격이 %.0f원에서 %.0f원으로 인상되었습니다.", 
-                          unitPrice, currentPrice);
+      return String.format("상품 가격이 %.0f원에서 %.0f원으로 인상되었습니다.",
+          unitPrice, currentPrice);
     } else {
-      return String.format("상품 가격이 %.0f원에서 %.0f원으로 인하되었습니다.", 
-                          unitPrice, currentPrice);
+      return String.format("상품 가격이 %.0f원에서 %.0f원으로 인하되었습니다.",
+          unitPrice, currentPrice);
     }
   }
 
@@ -190,12 +190,12 @@ public class CartItem extends BaseTimeEntity {
     if (product == null || product.getStockQuantity() == null) {
       return "재고 정보를 확인할 수 없습니다.";
     }
-    
+
     if (product.getStockQuantity() < quantity) {
-      return String.format("재고가 부족합니다. 현재 재고: %d개, 요청 수량: %d개", 
-                          product.getStockQuantity(), quantity);
+      return String.format("재고가 부족합니다. 현재 재고: %d개, 요청 수량: %d개",
+          product.getStockQuantity(), quantity);
     }
-    
+
     return null;
   }
 }

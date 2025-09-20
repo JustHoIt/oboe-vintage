@@ -34,13 +34,13 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
   Long countByProductId(@Param("productId") Long productId);
 
   /**
-   * 사용자 ID로 장바구니 아이템 목록 조회 (활성 장바구니만)
+   * 사용자 ID로 장바구니 아이템 목록 조회
    */
   @Query("SELECT ci FROM CartItem ci " +
-         "JOIN ci.cart c " +
-         "WHERE c.user.id = :userId AND c.isActive = true " +
-         "ORDER BY ci.createdAt ASC")
-  List<CartItem> findByUserIdAndCartActive(@Param("userId") Long userId);
+      "JOIN ci.cart c " +
+      "WHERE c.user.id = :userId " +
+      "ORDER BY ci.createdAt ASC")
+  List<CartItem> findByUserId(@Param("userId") Long userId);
 
   /**
    * 장바구니 ID로 장바구니 아이템 개수 조회
@@ -66,23 +66,23 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
    * 가격이 변경된 장바구니 아이템 목록 조회
    */
   @Query("SELECT ci FROM CartItem ci " +
-         "WHERE ci.cart.id = :cartId " +
-         "AND ci.unitPrice != ci.product.price")
+      "WHERE ci.cart.id = :cartId " +
+      "AND ci.unitPrice != ci.product.price")
   List<CartItem> findPriceChangedItemsByCartId(@Param("cartId") Long cartId);
 
   /**
    * 재고가 부족한 장바구니 아이템 목록 조회
    */
   @Query("SELECT ci FROM CartItem ci " +
-         "WHERE ci.cart.id = :cartId " +
-         "AND ci.quantity > ci.product.stockQuantity")
+      "WHERE ci.cart.id = :cartId " +
+      "AND ci.quantity > ci.product.stockQuantity")
   List<CartItem> findStockShortageItemsByCartId(@Param("cartId") Long cartId);
 
   /**
    * 판매 중지된 상품의 장바구니 아이템 목록 조회
    */
   @Query("SELECT ci FROM CartItem ci " +
-         "WHERE ci.cart.id = :cartId " +
-         "AND ci.product.productStatus != 'ACTIVE'")
+      "WHERE ci.cart.id = :cartId " +
+      "AND ci.product.productStatus != 'ACTIVE'")
   List<CartItem> findUnavailableProductItemsByCartId(@Param("cartId") Long cartId);
 }
