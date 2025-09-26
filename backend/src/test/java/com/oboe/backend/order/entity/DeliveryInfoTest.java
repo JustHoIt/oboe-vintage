@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@DisplayName("DeliveryInfo 임베디드 클래스 테스트")
+@DisplayName("DeliveryInfo Entity 테스트")
 class DeliveryInfoTest {
 
   private DeliveryInfo deliveryInfo;

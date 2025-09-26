@@ -1,4 +1,4 @@
-package com.oboe.backend.order.entity;
+package com.oboe.backend.order.entity.order;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -16,7 +16,7 @@ import com.querydsl.core.types.dsl.PathInits;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QOrderStatusHistory extends EntityPathBase<OrderStatusHistory> {
 
-    private static final long serialVersionUID = -1843323155L;
+    private static final long serialVersionUID = 1624902349L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 

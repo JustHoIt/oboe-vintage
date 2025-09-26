@@ -1,4 +1,4 @@
-package com.oboe.backend.order.entity;
+package com.oboe.backend.order.entity.order;
 
 public enum OrderStatus {
   PENDING,           // 주문대기

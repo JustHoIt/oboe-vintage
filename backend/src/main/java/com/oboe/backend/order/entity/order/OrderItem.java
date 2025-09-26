@@ -1,4 +1,4 @@
-package com.oboe.backend.order.entity;
+package com.oboe.backend.order.entity.order;
 
 import com.oboe.backend.common.domain.BaseTimeEntity;
 import com.oboe.backend.product.entity.Product;

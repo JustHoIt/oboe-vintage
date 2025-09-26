@@ -1,4 +1,4 @@
-package com.oboe.backend.order.entity;
+package com.oboe.backend.order.entity.order;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -16,7 +16,7 @@ import com.querydsl.core.types.dsl.PathInits;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QOrder extends EntityPathBase<Order> {
 
-    private static final long serialVersionUID = 559291221L;
+    private static final long serialVersionUID = 288056181L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 
@@ -29,7 +29,7 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final NumberPath<java.math.BigDecimal> deliveryFee = createNumber("deliveryFee", java.math.BigDecimal.class);
 
-    public final QDeliveryInfo deliveryInfo;
+    public final com.oboe.backend.order.entity.QDeliveryInfo deliveryInfo;
 
     public final NumberPath<java.math.BigDecimal> discountAmount = createNumber("discountAmount", java.math.BigDecimal.class);
 
@@ -41,9 +41,9 @@ public class QOrder extends EntityPathBase<Order> {
 
     public final StringPath orderNumber = createString("orderNumber");
 
-    public final QPaymentInfo paymentInfo;
+    public final com.oboe.backend.order.entity.payment.QPaymentInfo paymentInfo;
 
-    public final EnumPath<PaymentMethod> paymentMethod = createEnum("paymentMethod", PaymentMethod.class);
+    public final EnumPath<com.oboe.backend.order.entity.payment.PaymentMethod> paymentMethod = createEnum("paymentMethod", com.oboe.backend.order.entity.payment.PaymentMethod.class);
 
     public final EnumPath<OrderStatus> status = createEnum("status", OrderStatus.class);
 
@@ -74,8 +74,8 @@ public class QOrder extends EntityPathBase<Order> {
 
     public QOrder(Class<? extends Order> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.deliveryInfo = inits.isInitialized("deliveryInfo") ? new QDeliveryInfo(forProperty("deliveryInfo")) : null;
-        this.paymentInfo = inits.isInitialized("paymentInfo") ? new QPaymentInfo(forProperty("paymentInfo")) : null;
+        this.deliveryInfo = inits.isInitialized("deliveryInfo") ? new com.oboe.backend.order.entity.QDeliveryInfo(forProperty("deliveryInfo")) : null;
+        this.paymentInfo = inits.isInitialized("paymentInfo") ? new com.oboe.backend.order.entity.payment.QPaymentInfo(forProperty("paymentInfo")) : null;
         this.user = inits.isInitialized("user") ? new com.oboe.backend.user.entity.QUser(forProperty("user")) : null;
     }
 
