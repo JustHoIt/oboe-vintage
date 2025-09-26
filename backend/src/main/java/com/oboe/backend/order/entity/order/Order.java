@@ -1,6 +1,9 @@
-package com.oboe.backend.order.entity;
+package com.oboe.backend.order.entity.order;
 
 import com.oboe.backend.common.domain.BaseTimeEntity;
+import com.oboe.backend.order.entity.DeliveryInfo;
+import com.oboe.backend.order.entity.payment.PaymentInfo;
+import com.oboe.backend.order.entity.payment.PaymentMethod;
 import com.oboe.backend.user.entity.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

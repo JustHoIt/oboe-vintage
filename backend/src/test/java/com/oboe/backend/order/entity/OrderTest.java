@@ -3,6 +3,11 @@ package com.oboe.backend.order.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.oboe.backend.order.entity.order.Order;
+import com.oboe.backend.order.entity.order.OrderItem;
+import com.oboe.backend.order.entity.order.OrderItemStatus;
+import com.oboe.backend.order.entity.order.OrderStatus;
+import com.oboe.backend.order.entity.payment.PaymentMethod;
 import com.oboe.backend.product.entity.Condition;
 import com.oboe.backend.product.entity.Product;
 import com.oboe.backend.product.entity.ProductStatus;
@@ -11,8 +16,6 @@ import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
 import com.oboe.backend.user.entity.UserStatus;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -65,7 +68,7 @@ class OrderTest {
         .orderNumber("ORD-20241201-001")
         .user(user)
         .status(OrderStatus.PENDING)
-        .paymentMethod(PaymentMethod.CARD)
+        .paymentMethod(PaymentMethod.카드)
         .totalAmount(new BigDecimal("350000"))
         .deliveryFee(new BigDecimal("3000"))
         .discountAmount(new BigDecimal("10000"))
@@ -82,7 +85,7 @@ class OrderTest {
     assertThat(order.getOrderNumber()).isEqualTo("ORD-20241201-001");
     assertThat(order.getUser()).isEqualTo(user);
     assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
-    assertThat(order.getPaymentMethod()).isEqualTo(PaymentMethod.CARD);
+    assertThat(order.getPaymentMethod()).isEqualTo(PaymentMethod.카드);
     assertThat(order.getTotalAmount()).isEqualByComparingTo(new BigDecimal("350000"));
     assertThat(order.getDeliveryFee()).isEqualByComparingTo(new BigDecimal("3000"));
     assertThat(order.getDiscountAmount()).isEqualByComparingTo(new BigDecimal("10000"));
@@ -425,7 +428,7 @@ class OrderTest {
         .orderNumber("ORD-001")
         .user(user)
         .status(OrderStatus.PENDING)
-        .paymentMethod(PaymentMethod.CARD)
+        .paymentMethod(PaymentMethod.카드)
         .totalAmount(new BigDecimal("100000"))
         .finalAmount(new BigDecimal("100000"))
         .build();
@@ -434,14 +437,14 @@ class OrderTest {
         .orderNumber("ORD-002")
         .user(user)
         .status(OrderStatus.PENDING)
-        .paymentMethod(PaymentMethod.MOBILE_PAY)
+        .paymentMethod(PaymentMethod.휴대폰)
         .totalAmount(new BigDecimal("100000"))
         .finalAmount(new BigDecimal("100000"))
         .build();
 
     // then
-    assertThat(cardOrder.getPaymentMethod()).isEqualTo(PaymentMethod.CARD);
-    assertThat(mobilePayOrder.getPaymentMethod()).isEqualTo(PaymentMethod.MOBILE_PAY);
+    assertThat(cardOrder.getPaymentMethod()).isEqualTo(PaymentMethod.카드);
+    assertThat(mobilePayOrder.getPaymentMethod()).isEqualTo(PaymentMethod.휴대폰);
   }
 
   @Test

@@ -1,4 +1,4 @@
-package com.oboe.backend.order.entity;
+package com.oboe.backend.order.entity.order;
 
 public enum OrderItemStatus {
   ORDERED,           // 주문됨

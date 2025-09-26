@@ -2,6 +2,10 @@ package com.oboe.backend.order.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.oboe.backend.order.entity.order.Order;
+import com.oboe.backend.order.entity.order.OrderStatus;
+import com.oboe.backend.order.entity.order.OrderStatusHistory;
+import com.oboe.backend.order.entity.payment.PaymentMethod;
 import com.oboe.backend.user.entity.SocialProvider;
 import com.oboe.backend.user.entity.User;
 import com.oboe.backend.user.entity.UserRole;
@@ -35,7 +39,7 @@ class OrderStatusHistoryTest {
         .orderNumber("ORD-20241201-001")
         .user(user)
         .status(OrderStatus.PENDING)
-        .paymentMethod(PaymentMethod.CARD)
+        .paymentMethod(PaymentMethod.카드)
         .totalAmount(new java.math.BigDecimal("100000"))
         .finalAmount(new java.math.BigDecimal("100000"))
         .build();
