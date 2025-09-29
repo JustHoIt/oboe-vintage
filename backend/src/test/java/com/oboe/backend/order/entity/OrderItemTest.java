@@ -3,6 +3,11 @@ package com.oboe.backend.order.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.oboe.backend.order.entity.order.Order;
+import com.oboe.backend.order.entity.order.OrderItem;
+import com.oboe.backend.order.entity.order.OrderItemStatus;
+import com.oboe.backend.order.entity.order.OrderStatus;
+import com.oboe.backend.order.entity.payment.PaymentMethod;
 import com.oboe.backend.product.entity.Condition;
 import com.oboe.backend.product.entity.Product;
 import com.oboe.backend.product.entity.ProductStatus;
@@ -34,7 +39,7 @@ class OrderItemTest {
     order = Order.builder()
         .orderNumber("ORD-20241201-001")
         .status(OrderStatus.PENDING)
-        .paymentMethod(PaymentMethod.CARD)
+        .paymentMethod(PaymentMethod.카드)
         .totalAmount(new BigDecimal("300000"))
         .finalAmount(new BigDecimal("300000"))
         .build();
